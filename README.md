@@ -11,12 +11,17 @@ index.html + home.bin        página inicial
 aps/                         Caderno da APS
 prescricoes/                 Prescrições no PS
 ambulatorios/                Ambulatórios
-assets/                      tela de senha (porta.js, porta.css), ícone
+assets/                      tela de senha (porta.js, porta.css), cores e fonte (base.css),
+                             traçado de ECG (ecg.js), fonte Archivo (fontes/, licença OFL), ícone
 tools/build.mjs              gera as páginas cifradas
 src/                         HTML original de cada página (fora do Git)
 ```
 
 Cada pasta tem um `index.html` mínimo e um `pagina.bin` com a página comprimida e cifrada.
+
+## Visual
+
+Tema claro = "papel" (traçado em papel milimetrado); tema escuro = "monitor". As cores e a fonte de todas as páginas ficam em `assets/base.css`; o build inclui esse arquivo em cada página.
 
 ## Editar
 

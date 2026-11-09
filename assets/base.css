@@ -1,0 +1,39 @@
+/* Rotina clínica — base comum a todas as páginas: fonte e cores.
+   Tema claro = "papel" (traçado em papel milimetrado, tinta e caneta azul).
+   Tema escuro = "monitor" (tela de beira de leito). */
+@font-face{font-family:"Archivo";src:url("fontes/archivo.woff") format("woff");font-weight:300 700;font-stretch:62% 125%;font-style:normal;font-display:swap}
+
+:root{
+  --fonte:"Archivo","Helvetica Neue",Arial,sans-serif;
+  /* identidade */
+  --tela:#fcfbfa; --painel:#ffffff; --fio:#e4dfdd; --tinta:#16131b; --apagado:#6c6672;
+  --acao:#1f38d8; --acao-tinta:#ffffff; --sinal:#16131b;
+  --grade:rgba(214,72,72,.13); --grade-f:rgba(214,72,72,.28);
+  --rx:#b25a00; --aps:#0b7a55; --amb:#5a3fd6;
+  /* nomes usados pelas páginas internas (APS, Ambulatórios) */
+  --font:var(--fonte);
+  --bg:#f4f3f2; --card:#ffffff; --ink:#16131b; --muted:#6c6672; --line:#ddd8d6;
+  --soft:#f1efee; --hover:#e9e6e4;
+  --accent:#1f38d8; --accent-solid:#1f38d8; --accent-soft:#e9ecfd;
+  --nav:rgba(244,243,242,.86);
+  /* nomes usados pelo guia de prescrições */
+  --sans:var(--fonte);
+  --primary:#1f38d8; --primary-hover:#172bb0; --primary-soft:#e9ecfd; --primary-ink:#ffffff;
+  --surface:#ffffff; --muted-surface:#f4f3f2; --line-strong:#cfc9c6;
+}
+:root[data-theme="dark"],:root[data-scheme="dark"]{
+  --tela:#05161d; --painel:#0a222b; --fio:#1a3a46; --tinta:#e4f0f1; --apagado:#7f9ca5;
+  --acao:#8fe9f5; --acao-tinta:#05161d; --sinal:#a5f4f1;
+  --grade:rgba(140,220,230,.055); --grade-f:rgba(140,220,230,.12);
+  --rx:#ffc062; --aps:#6fe3ae; --amb:#b9a8ff;
+  --bg:#05161d; --card:#0a222b; --ink:#e4f0f1; --muted:#7f9ca5; --line:#1a3a46;
+  --soft:#102e39; --hover:#143642;
+  --accent:#8fe9f5; --accent-solid:#167c8e; --accent-soft:#0d3440;
+  --nav:rgba(5,22,29,.82);
+  --primary:#8fe9f5; --primary-hover:#b4f1f9; --primary-soft:#0d3440; --primary-ink:#05161d;
+  --surface:#0a222b; --muted-surface:#102e39; --line-strong:#27505e;
+}
+/* as páginas internas foram desenhadas para outra fonte: títulos menos apertados na Archivo */
+h1,h2,h3{font-stretch:108%}
+/* rótulos das páginas internas: sem caixa-alta espaçada */
+.kicker,p.kicker,.pilula{text-transform:none!important;letter-spacing:0!important;font-size:13px!important;font-weight:500!important}

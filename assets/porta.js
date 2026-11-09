@@ -43,26 +43,28 @@
   }
 
   /* ---------- tela de senha ---------- */
-  var tela;
+  var tela, ecg;
   function monta() {
     if (tela) return;
     document.documentElement.classList.add('rc-trancado');
     tela = document.createElement('main');
     tela.className = 'porta';
     tela.innerHTML =
-      '<svg class="porta-ecg" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M0 70H330l14-6 12 6h34l10-34 14 78 12-96 12 62 8-10h40l16-12 18 12H700l14-6 12 6h34l10-34 14 78 12-96 12 62 8-10h40l16-12 18 12h290"/></svg>' +
-      '<form class="porta-cx" autocomplete="off">' +
-        '<div class="porta-selo" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg></div>' +
-        '<p class="porta-k">Medicina · material pessoal</p>' +
-        '<h1>Rotina<br>clínica.</h1>' +
-        '<p class="porta-sub">Conteúdo protegido. Digite a senha para abrir.</p>' +
-        '<div class="porta-campo"><input id="porta-senha" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Senha" aria-label="Senha" required>' +
+      '<div class="porta-cima"><h1>Rotina<br>clínica</h1></div>' +
+      '<div class="porta-faixa"><canvas aria-hidden="true"></canvas>' +
+        '<p class="porta-nota" aria-hidden="true"><span>DII</span><span>25 mm/s</span></p><p class="porta-estado" aria-live="polite">Bloqueado</p></div>' +
+      '<form class="porta-baixo" autocomplete="off">' +
+        '<label class="porta-rot" for="porta-senha">Digite a senha para abrir</label>' +
+        '<div class="porta-campo"><input id="porta-senha" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••••" required>' +
         '<button type="submit" aria-label="Entrar"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>' +
         '<p class="porta-erro" role="alert" aria-live="assertive"></p>' +
         '<label class="porta-lembrar"><input type="checkbox" id="porta-lembrar" checked><span>Manter desbloqueado neste aparelho</span></label>' +
       '</form>';
     document.body.appendChild(tela);
-    var form = tela.querySelector('form'), campo = tela.querySelector('#porta-senha'), erro = tela.querySelector('.porta-erro');
+    var form = tela.querySelector('form'), campo = tela.querySelector('#porta-senha'), erro = tela.querySelector('.porta-erro'), estado = tela.querySelector('.porta-estado');
+    if (window.rcECG) ecg = window.rcECG(tela.querySelector('canvas'), { modo: 'plano', cor: '#a5f4f1', brilho: function () { return true; } });
+    var calmo = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    campo.addEventListener('input', function () { if (ecg) ecg.blip(); });
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       if (form.classList.contains('ocupado') || !campo.value) return;
@@ -71,12 +73,16 @@
       deriva(campo.value).then(function (raw) {
         return abre(raw).then(function (html) {
           guarda(raw, lembrar);
-          tela.classList.add('abrindo');
-          setTimeout(function () { mostra(html); }, 380);
+          /* senha certa: o ritmo volta, dois batimentos, e a página abre */
+          tela.classList.add('ritmo'); estado.textContent = 'Ritmo sinusal';
+          if (ecg) ecg.modo('sinusal');
+          setTimeout(function () { tela.classList.add('abrindo'); }, calmo || !ecg ? 60 : 1150);
+          setTimeout(function () { if (ecg) ecg.fim(); mostra(html); }, calmo || !ecg ? 380 : 1470);
         });
       }).catch(function (e) {
         form.classList.remove('ocupado');
         void form.offsetWidth; form.classList.add('errou');
+        if (ecg) ecg.modo('ruido', 650);
         erro.textContent = (e && e.message === 'rede') ? 'Não foi possível carregar. Confira a conexão.' : 'Senha incorreta.';
         campo.select();
       });

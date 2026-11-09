@@ -84,14 +84,16 @@ const stub = (pg) => {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#05161d">
 <title>${pg.titulo}</title>
 <link rel="icon" href="${raiz}assets/icone.svg" type="image/svg+xml">
 <script>try{if(localStorage.getItem('bancos-tema')==='escuro')document.documentElement.dataset.theme='dark'}catch(e){}</script>
+<link rel="stylesheet" href="${raiz}assets/base.css">
 <link rel="stylesheet" href="${raiz}assets/porta.css">
 </head>
 <body>
 <noscript><p style="font:16px system-ui;padding:40px">Ative o JavaScript para abrir este material.</p></noscript>
+<script src="${raiz}assets/ecg.js"></script>
 <script src="${raiz}assets/porta.js" data-bin="${pg.bin}" data-raiz="${raiz}"></script>
 </body>
 </html>
@@ -110,6 +112,8 @@ for (const pg of PAGINAS) {
   if (!existsSync(f)) { console.warn('faltando: src/' + pg.src); continue; }
   let html = le(f);
   if (pg.src === 'home.html') html = html.replace('"__INDICE__"', () => JSON.stringify(indice()).replace(/</g, '\\u003c'));
+  /* fonte e cores comuns: entram por último no <head> para valer sobre o CSS da própria página */
+  if (!html.includes('assets/base.css')) html = html.replace('</head>', () => `<link rel="stylesheet" href="${pg.pasta ? '../' : ''}assets/base.css">\n</head>`);
   if (pg.pasta) mkdirSync(p(pg.pasta), { recursive: true });
   /* só regrava o .bin se o conteúdo mudou (o IV aleatório mudaria o arquivo a cada build) */
   const fBin = p(pg.pasta, pg.bin);
