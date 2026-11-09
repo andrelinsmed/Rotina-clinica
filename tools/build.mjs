@@ -65,19 +65,25 @@ function indice() {
   for (const m of rx.matchAll(/\{id:'([^']+)',n:'((?:[^'\\]|\\.)*)',sp:'([^']+)'[^\n]*?cid:\[([^\]]*)\],k:'((?:[^'\\]|\\.)*)'/g))
     itens.push({ p: 'presc', r: m[1], t: m[2].replace(/\\'/g, "'"), g: esp[m[3]] || m[3], c: m[4].replace(/'/g, '').replace(/,/g, ' '), k: m[5] });
   const nRx = itens.length;
-  /* ambulatórios: pré-natal e puericultura (consultas) + especialidades (temas) */
+  /* ambulatórios: especialidade → pastas (pré-natal, puericultura…) → consultas; e temas da especialidade */
   const d = JSON.parse(le(p('src', 'ambulatorios.html')).match(/<script id="dados" type="application\/json">(.*?)<\/script>/s)[1]);
-  const espDe = (b) => b === 'prenatal' ? 'prenatal' : 'puericultura';
-  const blocos = d.blocos.map(b => ({ id: b.id, nome: b.nome, itens: b.consultas.map(c => ({ r: espDe(b.id) + '/' + c.id, t: c.titulo })) }));
-  for (const b of d.blocos) for (const c of b.consultas)
-    itens.push({ p: 'amb', r: espDe(b.id) + '/' + c.id, t: c.titulo, g: b.id === 'ia' ? 'Puericultura · introdução alimentar' : d.cadernos[espDe(b.id)].nome, k: (c.sub || '') + ' ' + (c.kicker || '') });
-  const amb = Object.entries(d.cadernos).map(([id, c]) => ({ id, nome: c.nome, cor: c.cor, icone: c.icone, rico: true,
-    n: d.blocos.filter(b => espDe(b.id) === id).reduce((s, b) => s + b.consultas.length, 0) }));
-  for (const [id, c] of Object.entries(d.cadernos)) itens.push({ p: 'amb', r: id, t: c.nome, g: 'Ambulatório', k: c.frase || '' });
+  const onde = {};
+  for (const e of d.especialidades) for (const pa of e.pastas || []) for (const b of pa.blocos || []) onde[b] = [e, pa];
+  const rotaB = (b, id) => onde[b] ? onde[b][0].id + '/' + onde[b][1].id + '/' + id : id;
+  const blocos = d.blocos.filter(b => onde[b.id]).map(b => ({ id: b.id, nome: b.nome, itens: b.consultas.map(c => ({ r: rotaB(b.id, c.id), t: c.titulo })) }));
+  for (const b of d.blocos) for (const c of b.consultas) if (onde[b.id])
+    itens.push({ p: 'amb', r: rotaB(b.id, c.id), t: c.titulo, g: onde[b.id][0].nome + ' · ' + onde[b.id][1].nome, k: (c.sub || '') + ' ' + (c.kicker || '') + ' ' + b.nome });
+  const amb = [];
   for (const e of d.especialidades) {
-    amb.push({ id: e.id, nome: e.nome, cor: e.cor, icone: e.icone, n: (e.temas || []).length });
-    itens.push({ p: 'amb', r: e.id, t: e.nome, g: 'Ambulatório', k: e.frase || '' });
-    for (const t of e.temas || []) itens.push({ p: 'amb', r: e.id + '/' + t.id, t: t.titulo, g: e.nome, k: (t.resumo || '') + ' ' + (t.tags || []).join(' ') });
+    const pastas = e.pastas || [], temas = e.temas || [];
+    const n = temas.length + pastas.reduce((s, pa) => s + (pa.temas || []).length + (pa.blocos || []).reduce((x, b) => x + (d.blocos.find(y => y.id === b) || { consultas: [] }).consultas.length, 0), 0);
+    amb.push({ id: e.id, nome: e.nome, cor: e.cor, icone: e.icone, n, sub: pastas.map(pa => pa.nome).join(', ') });
+    itens.push({ p: 'amb', r: e.id, t: e.nome, g: 'Ambulatório', k: (e.frase || '') + ' ' + pastas.map(pa => pa.nome).join(' ') });
+    for (const pa of pastas) {
+      itens.push({ p: 'amb', r: e.id + '/' + pa.id, t: pa.nome, g: e.nome + ' · pasta', k: pa.frase || '' });
+      for (const tm of pa.temas || []) itens.push({ p: 'amb', r: e.id + '/' + pa.id + '/' + tm.id, t: tm.titulo, g: e.nome + ' · ' + pa.nome, k: (tm.resumo || '') + ' ' + (tm.tags || []).join(' ') });
+    }
+    for (const tm of temas) itens.push({ p: 'amb', r: e.id + '/' + tm.id, t: tm.titulo, g: e.nome, k: (tm.resumo || '') + ' ' + (tm.tags || []).join(' ') });
   }
   return { itens, nRx, blocos, amb, esp: Object.values(esp).length };
 }
