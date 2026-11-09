@@ -14,7 +14,6 @@ const ITER = 600000;
 /* página de origem → pasta de saída. Para criar uma página nova, acrescente uma linha. */
 const PAGINAS = [
   { src: 'home.html',         pasta: '',              bin: 'home.bin',   titulo: 'Rotina clínica' },
-  { src: 'aps.html',          pasta: 'aps/',          bin: 'pagina.bin', titulo: 'Caderno da APS' },
   { src: 'prescricoes.html',  pasta: 'prescricoes/',  bin: 'pagina.bin', titulo: 'Prescrições no PS' },
   { src: 'ambulatorios.html', pasta: 'ambulatorios/', bin: 'pagina.bin', titulo: 'Ambulatórios' },
 ];
@@ -46,7 +45,12 @@ if (process.argv[2] === 'abrir') {
   for (const pg of PAGINAS) {
     const f = p(pg.pasta, pg.bin);
     if (!existsSync(f)) continue;
-    try { writeFileSync(p('src', pg.src), decifra(readFileSync(f))); console.log('src/' + pg.src); }
+    try {
+      let html = decifra(readFileSync(f));
+      /* a home leva o índice embutido: volta a ser o marcador para o build preencher de novo */
+      if (pg.src === 'home.html') html = html.replace(/const IDX=\{.*?\};\n/s, () => 'const IDX="__INDICE__";\n');
+      writeFileSync(p('src', pg.src), html); console.log('src/' + pg.src);
+    }
     catch { console.error('Senha incorreta (ou arquivo corrompido): ' + pg.pasta + pg.bin); process.exit(1); }
   }
   process.exit(0);
@@ -61,19 +65,21 @@ function indice() {
   for (const m of rx.matchAll(/\{id:'([^']+)',n:'((?:[^'\\]|\\.)*)',sp:'([^']+)'[^\n]*?cid:\[([^\]]*)\],k:'((?:[^'\\]|\\.)*)'/g))
     itens.push({ p: 'presc', r: m[1], t: m[2].replace(/\\'/g, "'"), g: esp[m[3]] || m[3], c: m[4].replace(/'/g, '').replace(/,/g, ' '), k: m[5] });
   const nRx = itens.length;
-  const aps = JSON.parse(le(p('src', 'aps.html')).match(/<script id="dados" type="application\/json">(.*?)<\/script>/s)[1]);
-  const blocos = aps.blocos.map(b => ({ id: b.id, nome: b.nome, itens: b.consultas.map(c => ({ r: c.id, t: c.titulo })) }));
-  for (const b of aps.blocos) for (const c of b.consultas) itens.push({ p: 'aps', r: c.id, t: c.titulo, g: b.nome, k: (c.sub || '') + ' ' + (c.kicker || '') });
-  let amb = [];
-  if (existsSync(p('src', 'ambulatorios.html'))) {
-    const d = JSON.parse(le(p('src', 'ambulatorios.html')).match(/<script id="dados" type="application\/json">(.*?)<\/script>/s)[1]);
-    amb = d.especialidades.map(e => ({ id: e.id, nome: e.nome, cor: e.cor, icone: e.icone, n: (e.temas || []).length }));
-    for (const e of d.especialidades) {
-      itens.push({ p: 'amb', r: e.id, t: e.nome, g: 'Ambulatório', k: e.frase || '' });
-      for (const t of e.temas || []) itens.push({ p: 'amb', r: e.id + '/' + t.id, t: t.titulo, g: e.nome, k: (t.resumo || '') + ' ' + (t.tags || []).join(' ') });
-    }
+  /* ambulatórios: pré-natal e puericultura (consultas) + especialidades (temas) */
+  const d = JSON.parse(le(p('src', 'ambulatorios.html')).match(/<script id="dados" type="application\/json">(.*?)<\/script>/s)[1]);
+  const espDe = (b) => b === 'prenatal' ? 'prenatal' : 'puericultura';
+  const blocos = d.blocos.map(b => ({ id: b.id, nome: b.nome, itens: b.consultas.map(c => ({ r: espDe(b.id) + '/' + c.id, t: c.titulo })) }));
+  for (const b of d.blocos) for (const c of b.consultas)
+    itens.push({ p: 'amb', r: espDe(b.id) + '/' + c.id, t: c.titulo, g: b.id === 'ia' ? 'Puericultura · introdução alimentar' : d.cadernos[espDe(b.id)].nome, k: (c.sub || '') + ' ' + (c.kicker || '') });
+  const amb = Object.entries(d.cadernos).map(([id, c]) => ({ id, nome: c.nome, cor: c.cor, icone: c.icone, rico: true,
+    n: d.blocos.filter(b => espDe(b.id) === id).reduce((s, b) => s + b.consultas.length, 0) }));
+  for (const [id, c] of Object.entries(d.cadernos)) itens.push({ p: 'amb', r: id, t: c.nome, g: 'Ambulatório', k: c.frase || '' });
+  for (const e of d.especialidades) {
+    amb.push({ id: e.id, nome: e.nome, cor: e.cor, icone: e.icone, n: (e.temas || []).length });
+    itens.push({ p: 'amb', r: e.id, t: e.nome, g: 'Ambulatório', k: e.frase || '' });
+    for (const t of e.temas || []) itens.push({ p: 'amb', r: e.id + '/' + t.id, t: t.titulo, g: e.nome, k: (t.resumo || '') + ' ' + (t.tags || []).join(' ') });
   }
-  return { itens, nRx, nAps: itens.filter(i => i.p === 'aps').length, blocos, amb, esp: Object.values(esp).length };
+  return { itens, nRx, blocos, amb, esp: Object.values(esp).length };
 }
 
 const stub = (pg) => {
