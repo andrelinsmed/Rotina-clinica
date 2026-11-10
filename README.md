@@ -30,6 +30,6 @@ git add -A && git commit -m "atualiza" && git push
 
 - **Ambulatórios:** o conteúdo está no bloco `<script id="dados">` de `src/ambulatorios.html`. Cada especialidade pode ter `pastas` (um assunto por pasta; Pré-natal é pasta de Ginecologia e obstetrícia, Puericultura é pasta de Pediatria). Especialidade e pasta têm duas listas, uma por método: `modelos` (modelos de consulta) e `teoria` (referencial teórico). Para um tema novo, acrescente um item numa dessas listas; a chave `modelo` mostra os tipos de seção. As consultas do pré-natal e da puericultura ficam em `blocos` e contam como modelos de consulta.
 - **Ícones:** `icone` (especialidade) e `glifo` (pasta) são o desenho SVG preenchido, em 24×24; o quadrado arredondado com degradê vem de `cor`.
-- **Calendário:** `src/calendario.html`. Os eventos ficam no navegador (chave `rc-agenda`); o rodapé da página exporta e importa um arquivo para levar a outro aparelho.
+- **Calendário:** `src/calendario.html`. Sincroniza com a agenda "Rotina clínica" do Google pelo script `apps-script/Agenda.gs` (publicado como app da web na conta do dono). O endereço `/exec` e o token ficam na constante `GCAL` de `src/calendario.html`, que só vai para o GitHub cifrada; a cópia do script no repositório tem o token trocado por `__TOKEN__`. Sem `GCAL.url`, os eventos ficam só no navegador.
 - **Página nova:** crie `src/nome.html` e acrescente uma linha em `PAGINAS` no `tools/build.mjs`.
 - **Trocar a senha:** apague `assets/sal.txt` e rode o build com a senha nova.
