@@ -16,6 +16,7 @@ const PAGINAS = [
   { src: 'home.html',         pasta: '',              bin: 'home.bin',   titulo: 'Rotina clínica' },
   { src: 'prescricoes.html',  pasta: 'prescricoes/',  bin: 'pagina.bin', titulo: 'Prescrições no PS' },
   { src: 'ambulatorios.html', pasta: 'ambulatorios/', bin: 'pagina.bin', titulo: 'Ambulatórios' },
+  { src: 'calendario.html',   pasta: 'calendario/',   bin: 'pagina.bin', titulo: 'Calendário' },
 ];
 
 const senha = process.env.RC_SENHA;
@@ -75,15 +76,20 @@ function indice() {
     itens.push({ p: 'amb', r: rotaB(b.id, c.id), t: c.titulo, g: onde[b.id][0].nome + ' · ' + onde[b.id][1].nome, k: (c.sub || '') + ' ' + (c.kicker || '') + ' ' + b.nome });
   const amb = [];
   for (const e of d.especialidades) {
-    const pastas = e.pastas || [], temas = e.temas || [];
-    const n = temas.length + pastas.reduce((s, pa) => s + (pa.temas || []).length + (pa.blocos || []).reduce((x, b) => x + (d.blocos.find(y => y.id === b) || { consultas: [] }).consultas.length, 0), 0);
+    /* cada especialidade e cada pasta tem dois métodos: modelos de consulta e referencial teórico */
+    const pastas = e.pastas || [];
+    const doMetodo = (o) => [['Modelo de consulta', o.modelos || []], ['Referencial teórico', (o.teoria || []).concat(o.temas || [])]];
+    const soltos = (o) => doMetodo(o).reduce((s, [, l]) => s + l.length, 0);
+    const n = soltos(e) + pastas.reduce((s, pa) => s + soltos(pa) + (pa.blocos || []).reduce((x, b) => x + (d.blocos.find(y => y.id === b) || { consultas: [] }).consultas.length, 0), 0);
     amb.push({ id: e.id, nome: e.nome, cor: e.cor, icone: e.icone, n, sub: pastas.map(pa => pa.nome).join(', ') });
     itens.push({ p: 'amb', r: e.id, t: e.nome, g: 'Ambulatório', k: (e.frase || '') + ' ' + pastas.map(pa => pa.nome).join(' ') });
     for (const pa of pastas) {
       itens.push({ p: 'amb', r: e.id + '/' + pa.id, t: pa.nome, g: e.nome + ' · pasta', k: pa.frase || '' });
-      for (const tm of pa.temas || []) itens.push({ p: 'amb', r: e.id + '/' + pa.id + '/' + tm.id, t: tm.titulo, g: e.nome + ' · ' + pa.nome, k: (tm.resumo || '') + ' ' + (tm.tags || []).join(' ') });
+      for (const [met, lista] of doMetodo(pa)) for (const tm of lista)
+        itens.push({ p: 'amb', r: e.id + '/' + pa.id + '/' + tm.id, t: tm.titulo, g: e.nome + ' · ' + pa.nome + ' · ' + met, k: (tm.resumo || '') + ' ' + (tm.tags || []).join(' ') });
     }
-    for (const tm of temas) itens.push({ p: 'amb', r: e.id + '/' + tm.id, t: tm.titulo, g: e.nome, k: (tm.resumo || '') + ' ' + (tm.tags || []).join(' ') });
+    for (const [met, lista] of doMetodo(e)) for (const tm of lista)
+      itens.push({ p: 'amb', r: e.id + '/' + tm.id, t: tm.titulo, g: e.nome + ' · ' + met, k: (tm.resumo || '') + ' ' + (tm.tags || []).join(' ') });
   }
   return { itens, nRx, blocos, amb, esp: Object.values(esp).length };
 }
