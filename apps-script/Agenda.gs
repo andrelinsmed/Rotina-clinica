@@ -1,5 +1,5 @@
 /**
- * Rotina clínica · ponte entre o Calendário do site e o Google Agenda.
+ * Rotina clínica · ponte entre o site e o Google (Agenda e, em Ambulatorios.gs, os Docs do Drive).
  *
  * Usa só a agenda chamada "Rotina clínica" (cria se não existir).
  * O site lê e grava eventos por aqui; o que você muda no Google Agenda aparece no site, e o contrário também.
@@ -39,6 +39,7 @@ function doPost(e) {
   if (req.token !== TOKEN) return json_({ ok: false, erro: 'não autorizado' });
 
   try {
+    if (String(req.acao || '').indexOf('amb_') === 0) return json_(ambulatorios_(req));   /* Ambulatorios.gs */
     const cal = agenda_();
     if (req.acao === 'listar') return json_({ ok: true, eventos: listar_(cal, req.de, req.ate), fuso: cal.getTimeZone() });
 
