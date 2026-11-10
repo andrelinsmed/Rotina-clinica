@@ -102,8 +102,9 @@ function arvoreAmb_(completo) {
     });
   });
   const ids = Object.keys(onde);
-  for (let i = 0; i < ids.length; i += 40) {
-    const q = "mimeType='" + MIME_DOC + "' and trashed=false and (" + ids.slice(i, i + 40).map(function (id) { return "'" + id + "' in parents"; }).join(' or ') + ')';
+  /* o Google limita o tamanho do endereço da consulta: 10 pastas por vez */
+  for (let i = 0; i < ids.length; i += 10) {
+    const q = "mimeType='" + MIME_DOC + "' and trashed=false and (" + ids.slice(i, i + 10).map(function (id) { return "'" + id + "' in parents"; }).join(' or ') + ')';
     let token = '';
     do {
       const r = drive_('get', 'https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy=name&fields=nextPageToken,files(id,name,parents,modifiedTime)&q=' + encodeURIComponent(q) + (token ? '&pageToken=' + token : ''));
