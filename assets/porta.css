@@ -1,15 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap");
 /* Rotina clínica — tela de senha */
-:root{--p-bg:#f5f5f7;--p-ink:#1d1d1f;--p-muted:#6e6e73;--p-card:#fff;--p-line:#d2d2d7;--p-accent:#0071e3;--p-bad:#b3261e;color-scheme:light}
-:root[data-theme="dark"]{--p-bg:#000;--p-ink:#f5f5f7;--p-muted:#a1a1a6;--p-card:#1d1d1f;--p-line:#38383a;--p-accent:#2997ff;--p-bad:#ff6b5e;color-scheme:dark}
+:root{--p-bg:#efeef1;--p-ink:#232326;--p-muted:#6c6c72;--p-card:#f9f9fa;--p-line:#dcdce0;--p-accent:#e8462c;--p-bad:#b3261e;color-scheme:light}
+:root[data-theme="dark"]{--p-bg:#0b0b0d;--p-ink:#f2f2f4;--p-muted:#9c9ca3;--p-card:#17171a;--p-line:#2a2a2e;--p-accent:#ff6a45;--p-bad:#ff6b5e;color-scheme:dark}
 html,body{margin:0;min-height:100%;background:var(--p-bg)}
 .porta,.porta *{box-sizing:border-box}
 .porta{position:fixed;inset:0;display:grid;place-items:center;padding:24px;overflow:hidden;color:var(--p-ink);
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-family:Urbanist,-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   -webkit-font-smoothing:antialiased;transition:opacity .38s ease,transform .38s ease,filter .38s ease}
 .porta.abrindo{opacity:0;transform:scale(1.03);filter:blur(8px)}
 .porta::before{content:"";position:absolute;inset:-20%;pointer-events:none;
   background:radial-gradient(38% 34% at 22% 24%,color-mix(in srgb,var(--p-accent) 16%,transparent),transparent 70%),
-             radial-gradient(34% 32% at 80% 78%,color-mix(in srgb,#34c759 12%,transparent),transparent 70%);
+             radial-gradient(34% 32% at 80% 78%,color-mix(in srgb,#ff8a5c 14%,transparent),transparent 70%);
   animation:porta-flutua 16s ease-in-out infinite alternate}
 @keyframes porta-flutua{to{transform:translate3d(3%,-3%,0) scale(1.06)}}
 .porta-ecg{position:absolute;left:0;right:0;top:50%;width:100%;height:150px;transform:translateY(-50%);pointer-events:none}
@@ -22,7 +23,7 @@ html,body{margin:0;min-height:100%;background:var(--p-bg)}
   animation:porta-entra .6s cubic-bezier(.2,.8,.2,1) both}
 @keyframes porta-entra{from{opacity:0;transform:translateY(14px) scale(.98)}}
 .porta-selo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;margin-bottom:22px;color:#fff;
-  background:linear-gradient(145deg,#2997ff,#0058c7);box-shadow:0 8px 20px color-mix(in srgb,#0071e3 35%,transparent)}
+  background:linear-gradient(145deg,#2d2d31,#0d0d0f);box-shadow:0 8px 20px rgba(0,0,0,.3)}
 .porta-selo svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .porta-k{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--p-muted)}
 .porta h1{margin:0;font-size:clamp(40px,11vw,52px);font-weight:750;letter-spacing:-.06em;line-height:1}
@@ -32,7 +33,7 @@ html,body{margin:0;min-height:100%;background:var(--p-bg)}
 .porta-campo:focus-within{box-shadow:inset 0 0 0 2px var(--p-accent)}
 .porta-campo input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--p-ink);font:500 17px/1 inherit;font-family:inherit;letter-spacing:.14em;padding:11px 0}
 .porta-campo input::placeholder{letter-spacing:0;color:var(--p-muted);font-weight:400}
-.porta-campo button{flex:none;width:42px;height:42px;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:#fff;background:#0071e3;transition:transform .15s,filter .15s}
+.porta-campo button{flex:none;width:42px;height:42px;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:#fff;background:linear-gradient(#3b3b3f,#151517);transition:transform .15s,filter .15s}
 .porta-campo button:hover{filter:brightness(1.1)}
 .porta-campo button:active{transform:scale(.94)}
 .porta-campo button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -43,5 +44,5 @@ html,body{margin:0;min-height:100%;background:var(--p-bg)}
 @keyframes porta-treme{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
 .porta-erro{min-height:20px;margin:8px 0 6px 18px;font-size:13px;font-weight:600;color:var(--p-bad)}
 .porta-lembrar{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--p-muted);cursor:pointer;padding:6px 0}
-.porta-lembrar input{width:16px;height:16px;accent-color:#0071e3;margin:0}
+.porta-lembrar input{width:16px;height:16px;accent-color:#e8462c;margin:0}
 @media (prefers-reduced-motion:reduce){.porta *,.porta,.porta::before{animation:none!important;transition:none!important}.porta-ecg path{stroke-dashoffset:0}}
