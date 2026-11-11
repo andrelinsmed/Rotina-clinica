@@ -87,3 +87,15 @@ input,textarea,select,button{font-family:inherit}
 .section-title h3,.rx-top h3{font-weight:600!important}
 .back{color:var(--primary)!important}
 @media (max-width:860px){.seg{border-radius:20px!important}.seg button{border-radius:16px!important}}
+/* temas importados dos PDFs */
+.texto-livre ul{margin:.3em 0 .6em;padding-left:1.25em}
+.texto-livre ul ul{margin:.2em 0 .3em}
+.texto-livre li{margin:.25em 0;line-height:1.55}
+.texto-livre li::marker{color:var(--accent)}
+.texto-livre ul ul li::marker{color:var(--muted)}
+.texto-livre .fig-orig{display:inline-flex;align-items:center;gap:8px;margin:.6em 0;padding:8px 12px;border-radius:12px;background:var(--soft);color:var(--muted);font-size:13px}
+.texto-livre .nota-fonte{color:var(--muted);font-size:12.5px}
+.texto-livre figure.fig-orig{display:block;margin:14px 0;padding:0;background:none}
+.texto-livre figure.fig-orig img{display:block;max-width:100%;height:auto;border-radius:14px;background:var(--soft);box-shadow:var(--rc-lip-sm)}
+.texto-livre figure.fig-orig.erro img{min-height:60px}
+.texto-livre figure.fig-orig.erro::after{content:"Figura indisponível neste aparelho (abra pela tela de senha)";display:block;font-size:12.5px;color:var(--muted);margin-top:6px}

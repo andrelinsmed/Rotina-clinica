@@ -3,7 +3,7 @@
    Uso:  RC_SENHA=suasenha node tools/build.mjs          gera as páginas cifradas a partir de src/
          RC_SENHA=suasenha node tools/build.mjs abrir    recria src/ a partir das páginas cifradas (ex.: num clone novo)
    src/ nunca vai para o GitHub (.gitignore). A senha nunca é gravada em arquivo. */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, copyFileSync } from 'node:fs';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { pbkdf2Sync, randomBytes, createCipheriv, createDecipheriv } from 'node:crypto';
 import { dirname, join } from 'node:path';
@@ -183,7 +183,7 @@ for (const pg of PAGINAS) {
   let html = montar(pg, le(f));
   if (PREVIA) { /* prévia sem cifra, sem os endereços e tokens do Google */
     const dst = join(PREVIA, pg.pasta); mkdirSync(dst, { recursive: true });
-    writeFileSync(join(dst, 'index.html'), html.replace(/const (GCAL|GDRV)=\{[^}]*\}/g, "const $1={url:'',token:''}").replace(/src:'(\w+)\/'/g, "src:'$1/index.html'"));
+    writeFileSync(join(dst, 'index.html'), html.replace(/const (GCAL|GDRV)=\{[^}]*\}/g, "const $1={url:'',token:''}").replace(/src:'(\w+)\/'/g, "src:'$1/index.html'").replace(/data-fig=\\?"(\w+)\\?"/g, (m, n) => m.replace('data-fig', 'data-figsrc').replace(n, 'fig/' + n + '.jpg') + ' data-fig=\\"' + n + '\\"'));
     console.log('prévia: ' + (pg.pasta || '/')); continue;
   }
   if (pg.pasta) mkdirSync(p(pg.pasta), { recursive: true });
@@ -199,5 +199,24 @@ for (const pg of PAGINAS) {
   writeFileSync(p(pg.pasta, 'index.html'), stub(pg));
   total += bin.length;
   console.log(`${(pg.pasta || '/').padEnd(15)} ${(Buffer.byteLength(html) / 1024).toFixed(0).padStart(4)} KB → ${(bin.length / 1024).toFixed(0).padStart(3)} KB`);
+}
+/* figuras dos temas (src/fig/*.jpg): cifradas sem gzip em ambulatorios/fig/<nome>.bin */
+{
+  const dirF = p('src', 'fig');
+  if (existsSync(dirF)) {
+    const destino = PREVIA ? join(PREVIA, 'ambulatorios', 'fig') : p('ambulatorios', 'fig');
+    mkdirSync(destino, { recursive: true });
+    let n = 0;
+    for (const f of readdirSync(dirF).filter(x => x.endsWith('.jpg'))) {
+      const nome = f.slice(0, -4);
+      if (PREVIA) { copyFileSync(join(dirF, f), join(destino, f)); n++; continue; }
+      const alvo = join(destino, nome + '.bin');
+      if (existsSync(alvo)) continue;
+      const iv = randomBytes(12), c = createCipheriv('aes-256-gcm', chave, iv);
+      writeFileSync(alvo, Buffer.concat([iv, c.update(readFileSync(join(dirF, f))), c.final(), c.getAuthTag()]));
+      n++;
+    }
+    console.log('figuras ' + (PREVIA ? 'copiadas' : 'novas cifradas') + ': ' + n);
+  }
 }
 console.log(`total cifrado: ${(total / 1024).toFixed(0)} KB`);

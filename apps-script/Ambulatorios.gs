@@ -18,7 +18,11 @@ const AMB_ESTRUTURA = [
   ['gastro', 'Gastroenterologia'], ['nefro', 'Nefrologia'], ['reumato', 'Reumatologia'], ['neuro', 'Neurologia'],
   ['psiq', 'Psiquiatria'], ['derma', 'Dermatologia'],
   ['gineco', 'Ginecologia e obstetrícia', [['prenatal', 'Pré-natal']]],
-  ['pedia', 'Pediatria', [['puericultura', 'Puericultura']]]
+  ['pedia', 'Pediatria', [['puericultura', 'Puericultura']]],
+  ['alergia', 'Alergia e imunologia'], ['cirurgia', 'Cirurgia'], ['paliativos', 'Cuidados paliativos'], ['emergencia', 'Emergência'],
+  ['geriatria', 'Geriatria'], ['hemato', 'Hematologia'], ['hepato', 'Hepatologia'], ['infecto', 'Infectologia'],
+  ['uti', 'Medicina intensiva'], ['mfc', 'Medicina de família e comunidade'], ['nutro', 'Nutrologia'],
+  ['oftalmo', 'Oftalmologia e otorrino'], ['uro', 'Urologia']
 ];
 const MIME_DOC = 'application/vnd.google-apps.document';
 const MIME_PASTA = 'application/vnd.google-apps.folder';
