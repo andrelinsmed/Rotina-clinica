@@ -19,6 +19,8 @@ const PAGINAS = [
   { src: 'farmacologia.html', pasta: 'farmacologia/', bin: 'pagina.bin', titulo: 'Farmacologia' },
   { src: 'questoes.html',     pasta: 'questoes/',     bin: 'pagina.bin', titulo: 'Banco de questões' },
   { src: 'calendario.html',   pasta: 'calendario/',   bin: 'pagina.bin', titulo: 'Calendário' },
+  /* página de uso único: tira do Drive os temas importados dos PDFs (some depois) */
+  { src: 'limpar.html',       pasta: 'ambulatorios/limpar/', bin: 'pagina.bin', titulo: 'Tirar temas importados' },
 ];
 
 const senha = process.env.RC_SENHA;
