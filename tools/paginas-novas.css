@@ -1,12 +1,12 @@
 /* base das páginas novas (Farmacologia, Banco de questões) — mesmo visual da home */
-:root{--bg:#efeef1;--panel:#f9f9fa;--ink:#232326;--muted:#6c6c72;--line:#e2e2e6;--soft:#e7e7eb;--red:#e8462c;--accent:#d63c22;--accent-soft:#fde8e3;--ok:#1d7446;--ok-soft:#e3f3ea;--bad:#b3261e;--bad-soft:#fbe7e5;
+:root{--bg:#efeef1;--panel:#f9f9fa;--ink:#232326;--muted:#6c6c72;--line:#e2e2e6;--soft:#e7e7eb;--red:#1f6fff;--accent:#1659d8;--accent-soft:#e3edff;--ok:#1d7446;--ok-soft:#e3f3ea;--bad:#b3261e;--bad-soft:#fbe7e5;
   --card:linear-gradient(#f8f8fa,#f1f1f3);--lip:inset 0 1px 0 #fff,0 5px 0 -1px #e2e2e6,0 20px 40px -18px rgba(20,20,30,.16);--lip-sm:inset 0 1px 0 #fff,0 3px 0 -1px #dfdfe3,0 10px 20px -12px rgba(20,20,30,.18);
   --btn:linear-gradient(#3b3b3f,#151517);--btn-ink:#fff;--btn-sh:0 10px 20px -8px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.16);
   --dark-card:radial-gradient(130% 120% at 20% 0%,#2c2c30,#121214 70%);color-scheme:light}
-:root[data-theme="dark"]{--bg:#0b0b0d;--panel:#121214;--ink:#f2f2f4;--muted:#9c9ca3;--line:#26262a;--soft:#1f1f22;--accent:#ff7a57;--accent-soft:#3a1a12;--ok:#4cc38a;--ok-soft:#10301f;--bad:#ff6b5e;--bad-soft:#3a1512;
+:root[data-theme="dark"]{--bg:#0b0b0d;--panel:#121214;--ink:#f2f2f4;--muted:#9c9ca3;--line:#26262a;--soft:#1f1f22;--accent:#6aa6ff;--accent-soft:#10264a;--ok:#4cc38a;--ok-soft:#10301f;--bad:#ff6b5e;--bad-soft:#3a1512;
   --card:linear-gradient(#1a1a1d,#151517);--lip:inset 0 1px 0 rgba(255,255,255,.05),0 5px 0 -1px #000,0 20px 40px -18px rgba(0,0,0,.7);--lip-sm:inset 0 1px 0 rgba(255,255,255,.05),0 3px 0 -1px #000,0 10px 20px -12px rgba(0,0,0,.6);
   --btn:linear-gradient(#fff,#e2e2e6);--btn-ink:#141416;--btn-sh:0 10px 20px -8px rgba(0,0,0,.7);
-  --dark-card:radial-gradient(130% 120% at 20% 0%,#3a201a,#1a1112 55%,#121214);color-scheme:dark}
+  --dark-card:radial-gradient(130% 120% at 20% 0%,#13254a,#0d1424 55%,#121214);color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Urbanist,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15.5px;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background-color .3s,color .3s}
@@ -26,7 +26,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .card{background:var(--card);border-radius:26px;box-shadow:var(--lip)}
 .chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border:0;border-radius:999px;background:var(--panel);font-size:13.5px;font-weight:500;white-space:nowrap;box-shadow:var(--lip-sm)}
 .chip .n{color:var(--muted)}
-.chip[aria-pressed="true"]{background:var(--red);color:#fff;box-shadow:0 8px 16px -8px rgba(232,70,44,.7)}
+.chip[aria-pressed="true"]{background:var(--red);color:#fff;box-shadow:0 8px 16px -8px rgba(31,111,255,.7)}
 .chip[aria-pressed="true"] .n{color:#fff;opacity:.8}
 .busca{position:relative;display:block}
 .busca svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted)}

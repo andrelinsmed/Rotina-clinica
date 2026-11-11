@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap");
 /* Rotina clínica — tela de senha */
-:root{--p-bg:#efeef1;--p-ink:#232326;--p-muted:#6c6c72;--p-card:#f9f9fa;--p-line:#dcdce0;--p-accent:#e8462c;--p-bad:#b3261e;color-scheme:light}
-:root[data-theme="dark"]{--p-bg:#0b0b0d;--p-ink:#f2f2f4;--p-muted:#9c9ca3;--p-card:#17171a;--p-line:#2a2a2e;--p-accent:#ff6a45;--p-bad:#ff6b5e;color-scheme:dark}
+:root{--p-bg:#efeef1;--p-ink:#232326;--p-muted:#6c6c72;--p-card:#f9f9fa;--p-line:#dcdce0;--p-accent:#1f6fff;--p-bad:#b3261e;color-scheme:light}
+:root[data-theme="dark"]{--p-bg:#0b0b0d;--p-ink:#f2f2f4;--p-muted:#9c9ca3;--p-card:#17171a;--p-line:#2a2a2e;--p-accent:#5b9bff;--p-bad:#ff6b5e;color-scheme:dark}
 html,body{margin:0;min-height:100%;background:var(--p-bg)}
 .porta,.porta *{box-sizing:border-box}
 .porta{position:fixed;inset:0;display:grid;place-items:center;padding:24px;overflow:hidden;color:var(--p-ink);
@@ -10,7 +10,7 @@ html,body{margin:0;min-height:100%;background:var(--p-bg)}
 .porta.abrindo{opacity:0;transform:scale(1.03);filter:blur(8px)}
 .porta::before{content:"";position:absolute;inset:-20%;pointer-events:none;
   background:radial-gradient(38% 34% at 22% 24%,color-mix(in srgb,var(--p-accent) 16%,transparent),transparent 70%),
-             radial-gradient(34% 32% at 80% 78%,color-mix(in srgb,#ff8a5c 14%,transparent),transparent 70%);
+             radial-gradient(34% 32% at 80% 78%,color-mix(in srgb,#6fa8ff 14%,transparent),transparent 70%);
   animation:porta-flutua 16s ease-in-out infinite alternate}
 @keyframes porta-flutua{to{transform:translate3d(3%,-3%,0) scale(1.06)}}
 .porta-ecg{position:absolute;left:0;right:0;top:50%;width:100%;height:150px;transform:translateY(-50%);pointer-events:none}
@@ -44,5 +44,5 @@ html,body{margin:0;min-height:100%;background:var(--p-bg)}
 @keyframes porta-treme{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
 .porta-erro{min-height:20px;margin:8px 0 6px 18px;font-size:13px;font-weight:600;color:var(--p-bad)}
 .porta-lembrar{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--p-muted);cursor:pointer;padding:6px 0}
-.porta-lembrar input{width:16px;height:16px;accent-color:#e8462c;margin:0}
+.porta-lembrar input{width:16px;height:16px;accent-color:#1f6fff;margin:0}
 @media (prefers-reduced-motion:reduce){.porta *,.porta,.porta::before{animation:none!important;transition:none!important}.porta-ecg path{stroke-dashoffset:0}}
