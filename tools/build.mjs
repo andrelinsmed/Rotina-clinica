@@ -16,7 +16,11 @@ const PAGINAS = [
   { src: 'home.html',         pasta: '',              bin: 'home.bin',   titulo: 'Rotina clínica' },
   { src: 'prescricoes.html',  pasta: 'prescricoes/',  bin: 'pagina.bin', titulo: 'Prescrições no PS' },
   { src: 'ambulatorios.html', pasta: 'ambulatorios/', bin: 'pagina.bin', titulo: 'Ambulatórios' },
+  { src: 'farmacologia.html', pasta: 'farmacologia/', bin: 'pagina.bin', titulo: 'Farmacologia' },
+  { src: 'questoes.html',     pasta: 'questoes/',     bin: 'pagina.bin', titulo: 'Banco de questões' },
   { src: 'calendario.html',   pasta: 'calendario/',   bin: 'pagina.bin', titulo: 'Calendário' },
+  /* página de uso único: leva os temas embutidos para o Google Docs (some depois da importação) */
+  { src: 'importar.html',     pasta: 'ambulatorios/importar/', bin: 'pagina.bin', titulo: 'Importar temas' },
 ];
 
 const senha = process.env.RC_SENHA;
@@ -95,7 +99,7 @@ function indice() {
 }
 
 const stub = (pg) => {
-  const raiz = pg.pasta ? '../' : './';
+  const raiz = pg.pasta ? '../'.repeat(pg.pasta.split('/').filter(Boolean).length) : './';
   return `<!doctype html>
 <html lang="pt-BR">
 <head>

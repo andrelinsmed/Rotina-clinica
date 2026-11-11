@@ -9,6 +9,8 @@ O conteúdo fica **cifrado** (AES-256-GCM, chave derivada da senha por PBKDF2). 
 ```
 index.html + home.bin        página inicial
 prescricoes/                 Prescrições no PS
+farmacologia/                Farmacologia
+questoes/                    Banco de questões
 ambulatorios/                Ambulatórios: especialidades, com pastas (pré-natal, puericultura…)
 calendario/                  Calendário (eventos ficam no aparelho)
 aps/                         só redireciona links antigos para ambulatorios/
@@ -23,7 +25,7 @@ Cada pasta tem um `index.html` mínimo e um `pagina.bin` com a página comprimid
 
 ```bash
 RC_SENHA=suasenha node tools/build.mjs abrir   # recria src/ a partir dos .bin (clone novo)
-# edite src/home.html, src/prescricoes.html, src/ambulatorios.html, src/calendario.html
+# edite src/home.html, src/prescricoes.html, src/ambulatorios.html, src/farmacologia.html, src/questoes.html, src/calendario.html
 RC_SENHA=suasenha node tools/build.mjs         # gera de novo os .bin
 git add -A && git commit -m "atualiza" && git push
 ```
@@ -34,3 +36,7 @@ git add -A && git commit -m "atualiza" && git push
 - **Temas no Google Docs:** cada tema dos Ambulatórios é um Google Doc na pasta do Drive "Site / Ambulatórios / Especialidade / (Assunto) / Referencial teórico ou Modelos de consulta". O site lê, edita e cria esses Docs pelo mesmo script (`apps-script/Ambulatorios.gs`, junto com `Agenda.gs` no mesmo projeto). Docs criados direto no Drive também aparecem (botão ↻ na página busca pastas novas). Endereço e token ficam na constante `GDRV` de `src/ambulatorios.html`, cifrada.
 - **Página nova:** crie `src/nome.html` e acrescente uma linha em `PAGINAS` no `tools/build.mjs`.
 - **Trocar a senha:** apague `assets/sal.txt` e rode o build com a senha nova.
+
+## Referencial teórico no Docs
+
+Os temas de referencial teórico não ficam mais dentro de `src/ambulatorios.html`: cada um é um Google Doc em Site / Ambulatórios / Especialidade / Referencial teórico. O bloco `legado` dos dados liga os endereços antigos da busca ao nome do Doc.

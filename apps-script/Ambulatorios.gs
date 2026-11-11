@@ -14,11 +14,31 @@ const AMB_RAIZ = 'Ambulatórios';
 const AMB_METODOS = { teoria: 'Referencial teórico', modelos: 'Modelos de consulta' };
 /* especialidades e assuntos (pastas) que o site já mostra; pastas novas criadas no Drive também aparecem */
 const AMB_ESTRUTURA = [
-  ['clinica', 'Clínica médica'], ['cardio', 'Cardiologia'], ['endocrino', 'Endocrinologia'], ['pneumo', 'Pneumologia'],
-  ['gastro', 'Gastroenterologia'], ['nefro', 'Nefrologia'], ['reumato', 'Reumatologia'], ['neuro', 'Neurologia'],
-  ['psiq', 'Psiquiatria'], ['derma', 'Dermatologia'],
+  ['clinica', 'Clínica médica'],
+  ['cardio', 'Cardiologia'],
+  ['endocrino', 'Endocrinologia'],
+  ['pneumo', 'Pneumologia'],
+  ['gastro', 'Gastroenterologia'],
+  ['nefro', 'Nefrologia'],
+  ['reumato', 'Reumatologia'],
+  ['neuro', 'Neurologia'],
+  ['psiq', 'Psiquiatria'],
+  ['derma', 'Dermatologia'],
   ['gineco', 'Ginecologia e obstetrícia', [['prenatal', 'Pré-natal']]],
-  ['pedia', 'Pediatria', [['puericultura', 'Puericultura']]]
+  ['pedia', 'Pediatria', [['puericultura', 'Puericultura']]],
+  ['alergia', 'Alergia e imunologia'],
+  ['cirurgia', 'Cirurgia'],
+  ['paliativos', 'Cuidados paliativos'],
+  ['emergencia', 'Emergência'],
+  ['geriatria', 'Geriatria'],
+  ['hemato', 'Hematologia'],
+  ['hepato', 'Hepatologia'],
+  ['infecto', 'Infectologia'],
+  ['uti', 'Medicina intensiva'],
+  ['mfc', 'Medicina de família e comunidade'],
+  ['nutro', 'Nutrologia'],
+  ['oftalmo', 'Oftalmologia e otorrino'],
+  ['uro', 'Urologia']
 ];
 const MIME_DOC = 'application/vnd.google-apps.document';
 const MIME_PASTA = 'application/vnd.google-apps.folder';
@@ -90,7 +110,8 @@ function mapaAmb_() {
 function arvoreAmb_(completo) {
   const cache = CacheService.getScriptCache();
   if (!completo) { const c = cache.get('AMB_ARVORE'); if (c) return JSON.parse(c); }
-  const mapa = completo ? mapearAmb_(false) : mapaAmb_();
+  /* completo: percorre o Drive de novo e cria as pastas que faltarem (especialidades novas do site) */
+  const mapa = completo ? mapearAmb_(true) : mapaAmb_();
   const onde = {};   // id da pasta → [nó, método]
   const nos = [];
   mapa.esp.forEach(function (e) {
