@@ -183,7 +183,7 @@ for (const pg of PAGINAS) {
   let html = montar(pg, le(f));
   if (PREVIA) { /* prévia sem cifra, sem os endereços e tokens do Google */
     const dst = join(PREVIA, pg.pasta); mkdirSync(dst, { recursive: true });
-    writeFileSync(join(dst, 'index.html'), html.replace(/const (GCAL|GDRV)=\{[^}]*\}/g, "const $1={url:'',token:''}"));
+    writeFileSync(join(dst, 'index.html'), html.replace(/const (GCAL|GDRV)=\{[^}]*\}/g, "const $1={url:'',token:''}").replace(/src:'(\w+)\/'/g, "src:'$1/index.html'"));
     console.log('prévia: ' + (pg.pasta || '/')); continue;
   }
   if (pg.pasta) mkdirSync(p(pg.pasta), { recursive: true });
