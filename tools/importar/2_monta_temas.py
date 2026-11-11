@@ -91,7 +91,7 @@ def secoes_de(tm, arq):
         m = re.match(r'^Fonte(s)? consultada(s)?:?\s*(.*)', t, re.I)
         if m:
             fonte = (fonte + '; ' if fonte else '') + m.group(3); continue
-        if re.match(r'^https?://', t) and ' ' not in t.strip():
+        if re.match(r'^https?://', t) and (' ' not in t.strip() or (len(t.split()) <= 4 and all(re.match(r'^[\w./%?=&#:~+-]+$', x) for x in t.split()))):
             links.append(t.replace(' ', '')); ult_link = i; continue
         if links and ult_link == i - 1 and ' ' not in t and not l['bullet'] and re.match(r'^[\w./%?=&#-]+$', t):
             links[-1] += t; ult_link = i; continue
