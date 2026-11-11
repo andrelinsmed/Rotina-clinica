@@ -8,6 +8,9 @@
  *
  * Rode uma vez pelo editor a função "configurarAmbulatorios": ela cria as pastas e pede a autorização do Drive.
  * A conta que publica o script precisa poder editar a pasta "Site".
+ *
+ * Farmacologia usa o mesmo esquema (req.area = 'farm'):
+ *   Site / Farmacologia / Referencial teórico / Noradrenalina
  */
 const PASTA_SITE = '1KOHQohjTC7couMwxfBcLs1WFCRDmx9i-';
 const AMB_RAIZ = 'Ambulatórios';
@@ -40,6 +43,7 @@ const AMB_ESTRUTURA = [
   ['oftalmo', 'Oftalmologia e otorrino'],
   ['uro', 'Urologia']
 ];
+const FARM_RAIZ = 'Farmacologia';
 const MIME_DOC = 'application/vnd.google-apps.document';
 const MIME_PASTA = 'application/vnd.google-apps.folder';
 
@@ -47,11 +51,13 @@ const MIME_PASTA = 'application/vnd.google-apps.folder';
 function configurarAmbulatorios() {
   const mapa = mapearAmb_(true);
   Logger.log('Pronto: %s especialidades em "%s".', mapa.esp.length, AMB_RAIZ);
+  mapearFarm_();
+  Logger.log('Pronto: "%s / %s".', FARM_RAIZ, AMB_METODOS.teoria);
 }
 
 /* chamado pelo doPost do Agenda.gs */
 function ambulatorios_(req) {
-  if (req.acao === 'amb_arvore') return { ok: true, arvore: arvoreAmb_(req.completo) };
+  if (req.acao === 'amb_arvore') return req.area === 'farm' ? { ok: true, farm: arvoreFarm_(req.completo) } : { ok: true, arvore: arvoreAmb_(req.completo) };
   if (req.acao === 'amb_ler') return Object.assign({ ok: true }, lerDoc_(req.id));
   if (req.acao === 'amb_salvar') return salvarDoc_(req);
   if (req.acao === 'amb_criar') return criarDoc_(req);
@@ -143,25 +149,55 @@ function arvoreAmb_(completo) {
   try { cache.put('AMB_ARVORE', JSON.stringify(arv), 300); } catch (err) {}
   return arv;
 }
-function limpaCacheArvore_() { try { CacheService.getScriptCache().remove('AMB_ARVORE'); } catch (err) {} }
+function limpaCacheArvore_() { try { CacheService.getScriptCache().removeAll(['AMB_ARVORE', 'FARM_ARVORE']); } catch (err) {} }
+
+/* ---------- Farmacologia: Site / Farmacologia / Referencial teórico ---------- */
+function mapearFarm_() {
+  const raiz = pastaFilha_(DriveApp.getFolderById(PASTA_SITE), FARM_RAIZ, true);
+  const teoria = pastaFilha_(raiz, AMB_METODOS.teoria, true);
+  const mapa = { raiz: raiz.getId(), teoria: teoria.getId() };
+  PropertiesService.getScriptProperties().setProperty('FARM_MAPA', JSON.stringify(mapa));
+  return mapa;
+}
+function mapaFarm_() {
+  const v = PropertiesService.getScriptProperties().getProperty('FARM_MAPA');
+  return v ? JSON.parse(v) : mapearFarm_();
+}
+/* Docs da pasta "Referencial teórico" (e Docs soltos em "Farmacologia") */
+function arvoreFarm_(completo) {
+  const cache = CacheService.getScriptCache();
+  if (!completo) { const c = cache.get('FARM_ARVORE'); if (c) return JSON.parse(c); }
+  const mapa = completo ? mapearFarm_() : mapaFarm_();
+  const q = "mimeType='" + MIME_DOC + "' and trashed=false and ('" + mapa.teoria + "' in parents or '" + mapa.raiz + "' in parents)";
+  const docs = [];
+  let token = '';
+  do {
+    const r = drive_('get', 'https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy=name&fields=nextPageToken,files(id,name,modifiedTime)&q=' + encodeURIComponent(q) + (token ? '&pageToken=' + token : ''));
+    (r.files || []).forEach(function (f) { docs.push({ id: f.id, nome: f.name, mod: f.modifiedTime }); });
+    token = r.nextPageToken || '';
+  } while (token);
+  const arv = { pasta: mapa.teoria, docs: docs };
+  try { cache.put('FARM_ARVORE', JSON.stringify(arv), 300); } catch (err) {}
+  return arv;
+}
 
 /* ---------- Docs ---------- */
-/* só aceita Docs que estejam dentro de "Site / Ambulatórios" */
+/* só aceita Docs que estejam dentro de "Site / Ambulatórios" ou "Site / Farmacologia" */
 function docDoSite_(id) {
   if (!/^[\w-]{20,}$/.test(String(id || ''))) throw new Error('documento inválido');
   const f = DriveApp.getFileById(id);
   if (f.getMimeType() !== MIME_DOC) throw new Error('não é um Google Doc');
-  const raiz = mapaAmb_().raiz;
+  const raizes = [mapaAmb_().raiz, mapaFarm_().raiz];
   let pais = f.getParents(), n = 0;
   while (pais.hasNext() && n < 8) {
     let p = pais.next();
     for (let d = 0; d < 6 && p; d++) {
-      if (p.getId() === raiz) return f;
+      if (raizes.indexOf(p.getId()) >= 0) return f;
       const pp = p.getParents(); p = pp.hasNext() ? pp.next() : null;
     }
     n++;
   }
-  throw new Error('documento fora da pasta Ambulatórios');
+  throw new Error('documento fora das pastas do site');
 }
 function lerDoc_(id) {
   const f = docDoSite_(id);
@@ -181,6 +217,7 @@ function salvarDoc_(req) {
 function criarDoc_(req) {
   const ids = {};
   mapaAmb_().esp.forEach(function (e) { [e].concat(e.pastas).forEach(function (n) { Object.keys(n.metodos).forEach(function (k) { ids[n.metodos[k]] = 1; }); }); });
+  ids[mapaFarm_().teoria] = 1;
   if (!ids[req.pasta]) throw new Error('pasta inválida');
   const nome = String(req.nome || '').trim().slice(0, 200);
   if (!nome) throw new Error('o tema precisa de um nome');
