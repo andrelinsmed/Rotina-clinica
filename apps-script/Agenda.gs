@@ -18,9 +18,9 @@ const TOKEN = '__TOKEN__';
 const NOME_AGENDA = 'Rotina clínica';
 
 /* tipo do site ↔ cor do Google Agenda */
-const COR_DO_TIPO = { prova: '11', plantao: '6', amb: '3', aula: '9', entrega: '7', pessoal: '8' };
+const COR_DO_TIPO = { prova: '11', plantao: '6', amb: '3', aula: '9', estudo: '10', entrega: '7', pessoal: '8' };
 const TIPO_DA_COR = { '11': 'prova', '4': 'prova', '6': 'plantao', '5': 'plantao', '3': 'amb', '1': 'amb',
-                      '9': 'aula', '7': 'entrega', '2': 'entrega', '10': 'entrega', '8': 'pessoal' };
+                      '9': 'aula', '10': 'estudo', '7': 'entrega', '2': 'entrega', '8': 'pessoal' };
 
 /* Rode uma vez pelo editor: cria a agenda (se faltar) e pede as autorizações. */
 function configurar() {
@@ -121,7 +121,9 @@ function salvar_(cal, s) {
     const ini = Utilities.parseDate(s.d + ' ' + s.h, tz, 'yyyy-MM-dd HH:mm');
     let dur = 60 * 60 * 1000;
     if (ev && !ev.isAllDayEvent()) dur = ev.getEndTime().getTime() - ev.getStartTime().getTime();
-    const fim = new Date(ini.getTime() + dur);
+    let fim = new Date(ini.getTime() + dur);
+    /* término informado pelo site (hf), no mesmo dia */
+    if (/^\d{2}:\d{2}$/.test(s.hf || '') && s.hf > s.h) fim = Utilities.parseDate(s.d + ' ' + s.hf, tz, 'yyyy-MM-dd HH:mm');
     if (ev) ev.setTime(ini, fim); else ev = cal.createEvent(s.t, ini, fim);
   } else {
     const dia = Utilities.parseDate(s.d + ' 12:00', tz, 'yyyy-MM-dd HH:mm');
