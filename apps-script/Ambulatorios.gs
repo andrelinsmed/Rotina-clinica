@@ -46,6 +46,8 @@ const AMB_ESTRUTURA = [
 const FARM_RAIZ = 'Farmacologia';
 const CX_RAIZ = 'Complexo 3';
 const CX_DISC = [['tbl', 'TBL'], ['medlab', 'MedLab'], ['morfo', 'Morfologia'], ['tutoria', 'Tutoria']];
+const MIME_PDF = 'application/pdf';
+const PDF_MAX = 30 * 1024 * 1024;
 const MIME_DOC = 'application/vnd.google-apps.document';
 const MIME_PASTA = 'application/vnd.google-apps.folder';
 
@@ -69,7 +71,9 @@ function ambulatorios_(req) {
   if (req.acao === 'amb_ler') return Object.assign({ ok: true }, lerDoc_(req.id));
   if (req.acao === 'amb_salvar') return salvarDoc_(req);
   if (req.acao === 'amb_criar') return criarDoc_(req);
-  if (req.acao === 'amb_excluir') { docDoSite_(req.id).setTrashed(true); limpaCacheArvore_(); return { ok: true }; }
+  if (req.acao === 'amb_excluir') { arquivoDoSite_(req.id, [MIME_DOC, MIME_PDF]).setTrashed(true); limpaCacheArvore_(); return { ok: true }; }
+  if (req.acao === 'amb_pdf_enviar') return enviarPdf_(req);
+  if (req.acao === 'amb_pdf_ler') return lerPdf_(req.id);
   return { ok: false, erro: 'ação desconhecida' };
 }
 
@@ -208,23 +212,28 @@ function arvoreCx_(completo) {
   const mapa = completo ? mapearCx_() : mapaCx_();
   const porPasta = {};
   const ids = CX_DISC.map(function (d) { return mapa.disc[d[0]]; });
-  const q = "mimeType='" + MIME_DOC + "' and trashed=false and (" + ids.map(function (id) { return "'" + id + "' in parents"; }).join(' or ') + ')';
+  const q = "(mimeType='" + MIME_DOC + "' or mimeType='" + MIME_PDF + "') and trashed=false and (" + ids.map(function (id) { return "'" + id + "' in parents"; }).join(' or ') + ')';
   let token = '';
   do {
-    const r = drive_('get', 'https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy=name&fields=nextPageToken,files(id,name,modifiedTime,parents)&q=' + encodeURIComponent(q) + (token ? '&pageToken=' + token : ''));
-    (r.files || []).forEach(function (f) { (f.parents || []).forEach(function (p) { (porPasta[p] = porPasta[p] || []).push({ id: f.id, nome: f.name, mod: f.modifiedTime }); }); });
+    const r = drive_('get', 'https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy=name&fields=nextPageToken,files(id,name,modifiedTime,parents,mimeType,size)&q=' + encodeURIComponent(q) + (token ? '&pageToken=' + token : ''));
+    (r.files || []).forEach(function (f) { (f.parents || []).forEach(function (p) {
+      const o = porPasta[p] = porPasta[p] || { docs: [], pdfs: [] };
+      if (f.mimeType === MIME_PDF) o.pdfs.push({ id: f.id, nome: f.name, mod: f.modifiedTime, tam: Number(f.size || 0) });
+      else o.docs.push({ id: f.id, nome: f.name, mod: f.modifiedTime });
+    }); });
     token = r.nextPageToken || '';
   } while (token);
-  const arv = { disc: CX_DISC.map(function (d) { const id = mapa.disc[d[0]]; return { id: d[0], nome: d[1], pasta: id, docs: porPasta[id] || [] }; }) };
+  const arv = { disc: CX_DISC.map(function (d) { const id = mapa.disc[d[0]]; const o = porPasta[id] || { docs: [], pdfs: [] }; return { id: d[0], nome: d[1], pasta: id, docs: o.docs, pdfs: o.pdfs }; }) };
   try { cache.put('CX_ARVORE', JSON.stringify(arv), 300); } catch (err) {}
   return arv;
 }
 
 /* só aceita Docs que estejam dentro de "Site / Ambulatórios", "Site / Farmacologia" ou "Site / Complexo 3" */
-function docDoSite_(id) {
+function docDoSite_(id) { return arquivoDoSite_(id, [MIME_DOC]); }
+function arquivoDoSite_(id, tipos) {
   if (!/^[\w-]{20,}$/.test(String(id || ''))) throw new Error('documento inválido');
   const f = DriveApp.getFileById(id);
-  if (f.getMimeType() !== MIME_DOC) throw new Error('não é um Google Doc');
+  if (tipos.indexOf(f.getMimeType()) < 0) throw new Error(tipos.length === 1 && tipos[0] === MIME_DOC ? 'não é um Google Doc' : 'tipo de arquivo não aceito');
   const raizes = [mapaAmb_().raiz, mapaFarm_().raiz, mapaCx_().raiz];
   let pais = f.getParents(), n = 0;
   while (pais.hasNext() && n < 8) {
@@ -252,6 +261,27 @@ function salvarDoc_(req) {
   const g = DriveApp.getFileById(req.id);
   return { ok: true, id: req.id, nome: g.getName(), mod: g.getLastUpdated().toISOString() };
 }
+/* PDF enviado pelo site para a pasta de uma disciplina do Complexo 3 */
+function enviarPdf_(req) {
+  const ok = {}; const cx = mapaCx_().disc; Object.keys(cx).forEach(function (k) { ok[cx[k]] = 1; });
+  if (!ok[req.pasta]) throw new Error('pasta inválida');
+  const b64 = String(req.b64 || '');
+  if (!b64) throw new Error('arquivo vazio');
+  const bytes = Utilities.base64Decode(b64);
+  if (bytes.length > PDF_MAX) throw new Error('arquivo maior que 30 MB');
+  if (String.fromCharCode.apply(null, bytes.slice(0, 4).map(function (b) { return b & 255; })) !== '%PDF') throw new Error('o arquivo não é um PDF');
+  let nome = String(req.nome || 'arquivo').trim().slice(0, 200);
+  if (!/\.pdf$/i.test(nome)) nome += '.pdf';
+  const f = DriveApp.getFolderById(req.pasta).createFile(Utilities.newBlob(bytes, MIME_PDF, nome));
+  limpaCacheArvore_();
+  return { ok: true, id: f.getId(), nome: f.getName(), mod: f.getLastUpdated().toISOString(), tam: f.getSize() };
+}
+function lerPdf_(id) {
+  const f = arquivoDoSite_(id, [MIME_PDF]);
+  if (f.getSize() > PDF_MAX) throw new Error('arquivo maior que 30 MB');
+  return { ok: true, nome: f.getName(), b64: Utilities.base64Encode(f.getBlob().getBytes()) };
+}
+
 function criarDoc_(req) {
   const ids = {};
   mapaAmb_().esp.forEach(function (e) { [e].concat(e.pastas).forEach(function (n) { Object.keys(n.metodos).forEach(function (k) { ids[n.metodos[k]] = 1; }); }); });
