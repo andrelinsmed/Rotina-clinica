@@ -44,6 +44,8 @@ const AMB_ESTRUTURA = [
   ['uro', 'Urologia']
 ];
 const FARM_RAIZ = 'Farmacologia';
+const CX_RAIZ = 'Complexo 3';
+const CX_DISC = [['tbl', 'TBL'], ['medlab', 'MedLab'], ['morfo', 'Morfologia'], ['tutoria', 'Tutoria']];
 const MIME_DOC = 'application/vnd.google-apps.document';
 const MIME_PASTA = 'application/vnd.google-apps.folder';
 
@@ -53,11 +55,17 @@ function configurarAmbulatorios() {
   Logger.log('Pronto: %s especialidades em "%s".', mapa.esp.length, AMB_RAIZ);
   mapearFarm_();
   Logger.log('Pronto: "%s / %s".', FARM_RAIZ, AMB_METODOS.teoria);
+  mapearCx_();
+  Logger.log('Pronto: "%s".', CX_RAIZ);
 }
 
 /* chamado pelo doPost do Agenda.gs */
 function ambulatorios_(req) {
-  if (req.acao === 'amb_arvore') return req.area === 'farm' ? { ok: true, farm: arvoreFarm_(req.completo) } : { ok: true, arvore: arvoreAmb_(req.completo) };
+  if (req.acao === 'amb_arvore') {
+    if (req.area === 'farm') return { ok: true, farm: arvoreFarm_(req.completo) };
+    if (req.area === 'cx3') return { ok: true, cx: arvoreCx_(req.completo) };
+    return { ok: true, arvore: arvoreAmb_(req.completo) };
+  }
   if (req.acao === 'amb_ler') return Object.assign({ ok: true }, lerDoc_(req.id));
   if (req.acao === 'amb_salvar') return salvarDoc_(req);
   if (req.acao === 'amb_criar') return criarDoc_(req);
@@ -149,7 +157,7 @@ function arvoreAmb_(completo) {
   try { cache.put('AMB_ARVORE', JSON.stringify(arv), 300); } catch (err) {}
   return arv;
 }
-function limpaCacheArvore_() { try { CacheService.getScriptCache().removeAll(['AMB_ARVORE', 'FARM_ARVORE']); } catch (err) {} }
+function limpaCacheArvore_() { try { CacheService.getScriptCache().removeAll(['AMB_ARVORE', 'FARM_ARVORE', 'CX_ARVORE']); } catch (err) {} }
 
 /* ---------- Farmacologia: Site / Farmacologia / Referencial teórico ---------- */
 function mapearFarm_() {
@@ -182,12 +190,42 @@ function arvoreFarm_(completo) {
 }
 
 /* ---------- Docs ---------- */
-/* só aceita Docs que estejam dentro de "Site / Ambulatórios" ou "Site / Farmacologia" */
+/* ---------- Complexo 3: Site / Complexo 3 / Tutoria / SP 3.1 ---------- */
+function mapearCx_() {
+  const raiz = pastaFilha_(DriveApp.getFolderById(PASTA_SITE), CX_RAIZ, true);
+  const mapa = { raiz: raiz.getId(), disc: {} };
+  CX_DISC.forEach(function (d) { mapa.disc[d[0]] = pastaFilha_(raiz, d[1], true).getId(); });
+  PropertiesService.getScriptProperties().setProperty('CX_MAPA', JSON.stringify(mapa));
+  return mapa;
+}
+function mapaCx_() {
+  const v = PropertiesService.getScriptProperties().getProperty('CX_MAPA');
+  return v ? JSON.parse(v) : mapearCx_();
+}
+function arvoreCx_(completo) {
+  const cache = CacheService.getScriptCache();
+  if (!completo) { const c = cache.get('CX_ARVORE'); if (c) return JSON.parse(c); }
+  const mapa = completo ? mapearCx_() : mapaCx_();
+  const porPasta = {};
+  const ids = CX_DISC.map(function (d) { return mapa.disc[d[0]]; });
+  const q = "mimeType='" + MIME_DOC + "' and trashed=false and (" + ids.map(function (id) { return "'" + id + "' in parents"; }).join(' or ') + ')';
+  let token = '';
+  do {
+    const r = drive_('get', 'https://www.googleapis.com/drive/v3/files?pageSize=1000&orderBy=name&fields=nextPageToken,files(id,name,modifiedTime,parents)&q=' + encodeURIComponent(q) + (token ? '&pageToken=' + token : ''));
+    (r.files || []).forEach(function (f) { (f.parents || []).forEach(function (p) { (porPasta[p] = porPasta[p] || []).push({ id: f.id, nome: f.name, mod: f.modifiedTime }); }); });
+    token = r.nextPageToken || '';
+  } while (token);
+  const arv = { disc: CX_DISC.map(function (d) { const id = mapa.disc[d[0]]; return { id: d[0], nome: d[1], pasta: id, docs: porPasta[id] || [] }; }) };
+  try { cache.put('CX_ARVORE', JSON.stringify(arv), 300); } catch (err) {}
+  return arv;
+}
+
+/* só aceita Docs que estejam dentro de "Site / Ambulatórios", "Site / Farmacologia" ou "Site / Complexo 3" */
 function docDoSite_(id) {
   if (!/^[\w-]{20,}$/.test(String(id || ''))) throw new Error('documento inválido');
   const f = DriveApp.getFileById(id);
   if (f.getMimeType() !== MIME_DOC) throw new Error('não é um Google Doc');
-  const raizes = [mapaAmb_().raiz, mapaFarm_().raiz];
+  const raizes = [mapaAmb_().raiz, mapaFarm_().raiz, mapaCx_().raiz];
   let pais = f.getParents(), n = 0;
   while (pais.hasNext() && n < 8) {
     let p = pais.next();
@@ -218,6 +256,7 @@ function criarDoc_(req) {
   const ids = {};
   mapaAmb_().esp.forEach(function (e) { [e].concat(e.pastas).forEach(function (n) { Object.keys(n.metodos).forEach(function (k) { ids[n.metodos[k]] = 1; }); }); });
   ids[mapaFarm_().teoria] = 1;
+  const cx = mapaCx_().disc; Object.keys(cx).forEach(function (k) { ids[cx[k]] = 1; });
   if (!ids[req.pasta]) throw new Error('pasta inválida');
   const nome = String(req.nome || '').trim().slice(0, 200);
   if (!nome) throw new Error('o tema precisa de um nome');

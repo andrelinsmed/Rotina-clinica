@@ -17,6 +17,7 @@ const PAGINAS = [
   { src: 'prescricoes.html',  pasta: 'prescricoes/',  bin: 'pagina.bin', titulo: 'Prescrições no PS' },
   { src: 'ambulatorios.html', pasta: 'ambulatorios/', bin: 'pagina.bin', titulo: 'Ambulatórios' },
   { src: 'farmacologia.html', pasta: 'farmacologia/', bin: 'pagina.bin', titulo: 'Farmacologia' },
+  { src: 'complexo.html', pasta: 'complexo/', bin: 'pagina.bin', titulo: 'Complexo 3' },
   { src: 'questoes.html',     pasta: 'questoes/',     bin: 'pagina.bin', titulo: 'Banco de questões' },
   { src: 'calendario.html',   pasta: 'calendario/',   bin: 'pagina.bin', titulo: 'Calendário' },
 ];
