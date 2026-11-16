@@ -1,4 +1,4 @@
-/* Rotina clínica — porta de entrada.
+/* André med — porta de entrada.
    O conteúdo de cada página fica cifrado (AES-256-GCM) num arquivo .bin; a chave é derivada da senha
    (PBKDF2-SHA256). Sem a senha, o que está no repositório é ilegível. Este arquivo não contém a senha. */
 (function () {

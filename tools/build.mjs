@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Rotina clínica — build.
+/* André med — build.
    Uso:  RC_SENHA=suasenha node tools/build.mjs          gera as páginas cifradas a partir de src/
          RC_SENHA=suasenha node tools/build.mjs abrir    recria src/ a partir das páginas cifradas (ex.: num clone novo)
    src/ nunca vai para o GitHub (.gitignore). A senha nunca é gravada em arquivo. */
@@ -13,12 +13,13 @@ const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ITER = 600000;
 /* página de origem → pasta de saída. Para criar uma página nova, acrescente uma linha. */
 const PAGINAS = [
-  { src: 'home.html',         pasta: '',              bin: 'home.bin',   titulo: 'Rotina clínica' },
+  { src: 'home.html',         pasta: '',              bin: 'home.bin',   titulo: 'André med' },
   { src: 'prescricoes.html',  pasta: 'prescricoes/',  bin: 'pagina.bin', titulo: 'Prescrições no PS' },
   { src: 'ambulatorios.html', pasta: 'ambulatorios/', bin: 'pagina.bin', titulo: 'Ambulatórios' },
-  { src: 'farmacologia.html', pasta: 'farmacologia/', bin: 'pagina.bin', titulo: 'Farmacologia' },
-  { src: 'complexo.html', pasta: 'complexo/', bin: 'pagina.bin', titulo: 'Complexo 3' },
-  { src: 'cx3-tutoria-31.html', pasta: 'complexo/ref-tutoria-31/', bin: 'pagina.bin', titulo: 'Tutoria SP 3.1 · Referencial' },
+  { src: 'ncs4.html',         pasta: 'ncs4/',         bin: 'pagina.bin', titulo: 'NCS4' },
+  { src: 'ncs4-ref-tbl-31.html', pasta: 'ncs4/ref-tbl-31/', bin: 'pagina.bin', titulo: 'TBL SP 3.1 · Referencial' },
+  { src: 'ncs4-ref-tutoria-31.html', pasta: 'ncs4/ref-tutoria-31/', bin: 'pagina.bin', titulo: 'Tutoria SP 3.1 · Referencial' },
+  { src: 'amb-ref-prenatal.html', pasta: 'ambulatorios/ref/prenatal-exame-obstetrico/', bin: 'pagina.bin', titulo: 'Pré-natal e exame obstétrico' },
   { src: 'questoes.html',     pasta: 'questoes/',     bin: 'pagina.bin', titulo: 'Banco de questões' },
   { src: 'calendario.html',   pasta: 'calendario/',   bin: 'pagina.bin', titulo: 'Calendário' },
 ];

@@ -1,4 +1,4 @@
-/* Rotina clínica — tela de senha */
+/* André med — tela de senha */
 :root{--p-bg:#f5f5f7;--p-ink:#1d1d1f;--p-muted:#6e6e73;--p-card:#fff;--p-line:#d2d2d7;--p-accent:#0071e3;--p-bad:#b3261e;color-scheme:light}
 :root[data-theme="dark"]{--p-bg:#000;--p-ink:#f5f5f7;--p-muted:#a1a1a6;--p-card:#1d1d1f;--p-line:#38383a;--p-accent:#2997ff;--p-bad:#ff6b5e;color-scheme:dark}
 html,body{margin:0;min-height:100%;background:var(--p-bg)}
