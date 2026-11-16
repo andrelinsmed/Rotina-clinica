@@ -111,11 +111,11 @@ const stub = (pg) => {
 <title>${pg.titulo}</title>
 <link rel="icon" href="${raiz}assets/icone.svg" type="image/svg+xml">
 <script>try{if(localStorage.getItem('bancos-tema')==='escuro')document.documentElement.dataset.theme='dark'}catch(e){}</script>
-<link rel="stylesheet" href="${raiz}assets/porta.css">
+<link rel="stylesheet" href="${raiz}assets/porta.css?v=am1">
 </head>
 <body>
 <noscript><p style="font:16px system-ui;padding:40px">Ative o JavaScript para abrir este material.</p></noscript>
-<script src="${raiz}assets/porta.js" data-bin="${pg.bin}" data-raiz="${raiz}"></script>
+<script src="${raiz}assets/porta.js?v=am1" data-bin="${pg.bin}" data-raiz="${raiz}"></script>
 </body>
 </html>
 `;

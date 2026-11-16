@@ -1,5 +1,5 @@
 /**
- * Rotina clínica · Ambulatórios no Google Drive.
+ * André med · Ambulatórios no Google Drive.
  *
  * Cada tema do site é um Google Doc dentro da pasta "Site" do Drive, na mesma ordem do site:
  *   Site / Ambulatórios / Cardiologia / Referencial teórico / Insuficiência cardíaca

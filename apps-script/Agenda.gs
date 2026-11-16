@@ -1,7 +1,7 @@
 /**
- * Rotina clínica · ponte entre o site e o Google (Agenda e, em Ambulatorios.gs, os Docs do Drive).
+ * André med · ponte entre o site e o Google (Agenda e, em Ambulatorios.gs, os Docs do Drive).
  *
- * Usa só a agenda chamada "Rotina clínica" (cria se não existir).
+ * Usa só a agenda chamada "André med" (cria se não existir; renomeia a antiga "Rotina clínica").
  * O site lê e grava eventos por aqui; o que você muda no Google Agenda aparece no site, e o contrário também.
  *
  * Como publicar (uma vez):
@@ -15,7 +15,8 @@
  * Se trocar o TOKEN aqui, ele precisa ser trocado no site também.
  */
 const TOKEN = '__TOKEN__';
-const NOME_AGENDA = 'Rotina clínica';
+const NOME_AGENDA = 'André med';
+const NOME_ANTIGO = 'Rotina clínica';
 
 /* tipo do site ↔ cor do Google Agenda */
 const COR_DO_TIPO = { prova: '11', plantao: '6', amb: '3', aula: '9', estudo: '10', entrega: '7', pessoal: '8' };
@@ -29,7 +30,7 @@ function configurar() {
 }
 
 function doGet() {
-  return json_({ ok: true, app: 'rotina-clinica-agenda' });
+  return json_({ ok: true, app: 'andre-med-agenda' });
 }
 
 function doPost(e) {
@@ -72,10 +73,11 @@ function agenda_() {
   const id = props.getProperty('AGENDA_ID');
   let cal = id ? CalendarApp.getCalendarById(id) : null;
   if (!cal) {
-    const achadas = CalendarApp.getCalendarsByName(NOME_AGENDA);
+    const achadas = CalendarApp.getCalendarsByName(NOME_AGENDA).concat(CalendarApp.getCalendarsByName(NOME_ANTIGO));
     cal = achadas.length ? achadas[0] : CalendarApp.createCalendar(NOME_AGENDA, { color: CalendarApp.Color.RED });
     props.setProperty('AGENDA_ID', cal.getId());
   }
+  if (cal.getName() === NOME_ANTIGO) cal.setName(NOME_AGENDA);
   return cal;
 }
 
