@@ -109,8 +109,8 @@ const stub = (pg) => {
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <title>${pg.titulo}</title>
-<link rel="icon" href="${raiz}assets/icone.png?v=am1" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="${raiz}assets/apple-touch-icon.png?v=am1">
+<link rel="icon" href="${raiz}assets/icone.png?v=am2" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="${raiz}assets/apple-touch-icon.png?v=am2">
 <meta name="apple-mobile-web-app-title" content="André med">
 <script>try{if(localStorage.getItem('bancos-tema')==='escuro')document.documentElement.dataset.theme='dark'}catch(e){}</script>
 <link rel="stylesheet" href="${raiz}assets/porta.css?v=am1">
