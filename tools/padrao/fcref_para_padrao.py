@@ -145,3 +145,7 @@ if meta_html:
     out = out.replace('</div>\n</header>', f'</div>\n  <p class="meta">{html.escape(meta_html)}</p>\n</header>', 1)
 open(sai, 'w', encoding='utf-8').write(out)
 print('seções', len(secoes), '| figuras', out.count('class="fig"'), '| quadros', out.count('class="note'), '| tabelas', out.count('<table'), '| bytes', len(out))
+
+# modo escuro que segue o tema do site
+import importlib.util as _u
+_sp=_u.spec_from_file_location('escuro','/home/claude/tools/padrao/escuro.py');_m=_u.module_from_spec(_sp);_sp.loader.exec_module(_m);_m.aplica(sai if 'sai' in dir() else sys.argv[2])

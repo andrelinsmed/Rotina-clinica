@@ -137,3 +137,7 @@ out = (mod.replace('{{CSS}}', open(P + 'referencial.css', encoding='utf-8').read
 if not objetivos: out = out.replace('<div class="obj"><b></b></div>', '')
 open(SAI, 'w', encoding='utf-8').write(out)
 print('seções', len(secoes), '| objetivos', len(objetivos), '| tamanho', len(out))
+
+# modo escuro que segue o tema do site
+import importlib.util as _u
+_sp=_u.spec_from_file_location('escuro','/home/claude/tools/padrao/escuro.py');_m=_u.module_from_spec(_sp);_sp.loader.exec_module(_m);_m.aplica(sai if 'sai' in dir() else sys.argv[2])
