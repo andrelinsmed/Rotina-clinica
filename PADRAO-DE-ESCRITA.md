@@ -53,7 +53,15 @@ automaticamente em toda página cujo caminho seja de referencial (`ncs4/ref-*/` 
 `ambulatorios/ref/<slug>/`). Uma página nova de referencial já nasce com ele; nada a fazer.
 
 - Barra flutuante no canto inferior esquerdo, com duas cores (amarelo e laranja), borracha e apagar tudo.
-  Funciona com caneta, dedo ou seleção comum; a rolagem vertical com o dedo continua livre.
+- Cada tipo de toque tem um papel só (via `pointerType`):
+  - **caneta** grifa. No iPad, a rolagem é bloqueada só para ela (`touchstart` com `touchType === 'stylus'`
+    e `preventDefault`), então um risco que desce um pouco não vira rolagem. Um toque grifa a palavra; com a
+    borracha, um toque num grifo apaga o grifo inteiro;
+  - **dedo** nunca grifa por arraste: rola a página. Para grifar com o dedo, toque e segure para selecionar,
+    ajuste e toque na cor (a última seleção é guardada, porque no iOS tocar no botão pode desfazê-la);
+  - **mouse** arrasta para grifar, ou seleciona e clica na cor.
+- O traço encaixa em palavras inteiras, ignora início fora da linha de texto (margens) e mostra uma
+  prévia própria (`.gf-camada`) em vez da seleção do sistema, que no iPad abria alças e menu no meio do traço.
 - Dentro do NCS4 o iframe é esticado até a altura do conteúdo, então quem rola é a página do site e
   `position:fixed` não funciona: a barra detecta que está embutida e segue a rolagem do pai por
   `frameElement.getBoundingClientRect()`. Pelo mesmo motivo, a barra de navegação própria da página

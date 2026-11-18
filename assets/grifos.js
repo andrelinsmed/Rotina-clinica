@@ -1,6 +1,11 @@
 /* André med — marca-texto dos referenciais teóricos.
    Injetado pelo build em toda página de referencial (ver tools/build.mjs).
-   Barra flutuante com duas cores, borracha e apagar tudo; funciona com caneta, dedo ou seleção.
+   Barra flutuante com duas cores, borracha e apagar tudo.
+   Cada tipo de toque tem um papel só:
+     caneta  → grifa (a rolagem é bloqueada só para a caneta; o dedo continua rolando);
+     dedo    → rola; para grifar com o dedo, segure para selecionar e toque na cor;
+     mouse   → arraste para grifar, ou selecione e clique na cor.
+   O traço encaixa em palavras inteiras e mostra uma prévia própria (sem acionar a seleção do sistema).
    Os grifos ficam salvos em localStorage, por página, com assinatura do texto: se a página for
    republicada com o texto alterado, os grifos antigos são descartados em vez de aparecerem fora
    de lugar. Nenhuma biblioteca externa. */
@@ -28,10 +33,16 @@
     '.gf-escuro mark.uh.o{background:linear-gradient(transparent 8%,rgba(255,149,0,.32) 8%,rgba(255,149,0,.32) 92%,transparent 92%)}',
     'body.nohl mark.uh{background:none!important}',
     'body.gf-ativo{cursor:crosshair}',
-    'body.gf-ativo .wrap,body.gf-ativo main{touch-action:pan-y}',
     'body.gf-ativo ::selection{background:rgba(255,214,10,.45)}',
     'body.gf-ativo.gf-laranja ::selection{background:rgba(255,149,0,.45)}',
     'body.gf-apagar{cursor:cell}',
+    'body.gf-tracando{-webkit-user-select:none;user-select:none}',
+    '.gf-camada{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:2147482000}',
+    '.gf-p{position:absolute;border-radius:2px;mix-blend-mode:multiply}',
+    '.gf-p.y{background:rgba(255,214,10,.5)}.gf-p.o{background:rgba(255,149,0,.48)}',
+    '.gf-p.x{background:rgba(120,120,128,.28);mix-blend-mode:normal}',
+    '.gf-escuro .gf-p{mix-blend-mode:normal}',
+    '.gf-escuro .gf-p.y{background:rgba(255,214,10,.3)}.gf-escuro .gf-p.o{background:rgba(255,149,0,.3)}',
     'body.gf-emb .top{display:none}',
     '.hlwrap{position:fixed;left:18px;bottom:18px;z-index:2147483000;display:flex;flex-direction:column;align-items:flex-start;gap:10px}',
     '.hlwrap.emb{position:absolute;bottom:auto}',
@@ -77,7 +88,8 @@
 
   /* ---------- nós de texto, posições ---------- */
   var cL = null, cMap = null, cPre = null;
-  function invalida() { cL = null; cMap = null; cPre = null; }
+  var cTxt = null;
+  function invalida() { cL = null; cMap = null; cPre = null; cTxt = null; }
   function varre() {
     var out = [], w = document.createTreeWalker(alvo, NodeFilter.SHOW_TEXT, {
       acceptNode: function (n) {
@@ -188,7 +200,31 @@
   }
 
   /* ---------- traço ---------- */
-  var modo = null, tracando = false, ini = -1, ultimo = -1, rIni = null;
+  var modo = null, tr = null;
+  var LETRA = (function () { try { return new RegExp('[\\p{L}\\p{N}]', 'u'); } catch (e) { return /[0-9A-Za-zÀ-ÖØ-öø-ÿ]/; } })();
+  function texto() { if (cTxt === null) cTxt = nos().map(function (n) { return n.nodeValue; }).join(''); return cTxt; }
+  /* encaixa o trecho em palavras inteiras e tira espaços das pontas */
+  function encaixa(a, b) {
+    var t = texto();
+    if (a > b) { var x = a; a = b; b = x; }
+    while (a < b && /\s/.test(t.charAt(a))) a++;
+    while (b > a && /\s/.test(t.charAt(b - 1))) b--;
+    while (a > 0 && LETRA.test(t.charAt(a - 1))) a--;
+    while (b < t.length && LETRA.test(t.charAt(b))) b++;
+    return [a, b];
+  }
+  /* posição absoluta → nó de texto + deslocamento */
+  function ponto(pos) {
+    var lista = nos(); if (!cPre) monta();
+    for (var i = lista.length - 1; i >= 0; i--) if (cPre[i] <= pos) return [lista[i], Math.min(pos - cPre[i], lista[i].nodeValue.length)];
+    return lista.length ? [lista[0], 0] : null;
+  }
+  function faixa(a, b) {
+    var p = ponto(a), q = ponto(b); if (!p || !q) return null;
+    var r = document.createRange();
+    try { r.setStart(p[0], p[1]); r.setEnd(q[0], q[1]); } catch (e) { return null; }
+    return r;
+  }
   function caret(x, y) {
     if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
     if (document.caretPositionFromPoint) {
@@ -197,41 +233,108 @@
     }
     return null;
   }
+  /* posição do texto sob o ponto; no início do traço exige que o ponto esteja de fato sobre a linha */
+  function posEm(x, y, estrito) {
+    var r = caret(x, y); if (!r || r.startContainer.nodeType !== 3) return -1;
+    if (estrito) {
+      var q = r.getBoundingClientRect();
+      if (q && q.height > 0 && (y < q.top - 14 || y > q.bottom + 14)) return -1;
+    }
+    return desloc(r.startContainer, r.startOffset);
+  }
+  var camada = document.createElement('div');
+  camada.className = 'gf-camada';
+  document.body.appendChild(camada);
+  function previa(a, b) {
+    camada.innerHTML = '';
+    if (b <= a) return;
+    var r = faixa(a, b); if (!r) return;
+    var sx = window.scrollX || 0, sy = window.scrollY || 0, cls = 'gf-p ' + (modo === 'apagar' ? 'x' : modo), html = '';
+    [].forEach.call(r.getClientRects(), function (q) {
+      if (q.width < 1 || q.height < 1) return;
+      html += '<div class="' + cls + '" style="left:' + (q.left + sx) + 'px;top:' + (q.top + sy) + 'px;width:' + q.width + 'px;height:' + q.height + 'px"></div>';
+    });
+    camada.innerHTML = html;
+  }
+  function interativo(el) { return el && el.closest && el.closest('button,a,input,select,textarea,label,summary,.hlwrap,.ctrls,.ctl,.sl,.slider-row'); }
+
+  /* caneta da Apple: bloqueia a rolagem só para ela (o dedo continua rolando) */
+  function segura(e) {
+    if (!modo || interativo(e.target)) return;
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].touchType === 'stylus') { e.preventDefault(); return; }
+    }
+  }
+  document.addEventListener('touchstart', segura, { passive: false });
+  document.addEventListener('touchmove', segura, { passive: false });
+
+  function fim(e, cancelado) {
+    if (!tr || (e && e.pointerId !== tr.id)) return;
+    var t = tr; tr = null;
+    camada.innerHTML = '';
+    document.body.classList.remove('gf-tracando');
+    try { alvo.releasePointerCapture(t.id); } catch (err) {}
+    if (cancelado) return;
+    if (!t.moveu) {
+      if (t.tipo !== 'pen') return;                       /* clique de mouse sem arrastar não grifa */
+      if (modo === 'apagar') {                            /* toque da caneta num grifo apaga o grifo inteiro */
+        var g = marcas.filter(function (m) { return m.s <= t.ini && t.ini < m.e; })[0];
+        if (g) apagaEm(g.s, g.e);
+        return;
+      }
+    }
+    var ab = encaixa(t.ini, t.ult);
+    if (ab[1] <= ab[0]) return;
+    if (modo === 'apagar') apagaEm(ab[0], ab[1]); else if (modo) guarda(ab[0], ab[1], modo);
+  }
   alvo.addEventListener('pointerdown', function (e) {
-    if (!modo) return;
-    var r = caret(e.clientX, e.clientY); if (!r || r.startContainer.nodeType !== 3) return;
-    var p = desloc(r.startContainer, r.startOffset); if (p < 0) return;
-    tracando = true; ini = p; ultimo = p; rIni = r;
+    if (!modo || tr) return;
+    if (e.pointerType === 'touch') return;                /* dedo: só rola (ou seleciona com toque longo) */
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (interativo(e.target)) return;
+    var p = posEm(e.clientX, e.clientY, true); if (p < 0) return;
+    tr = { id: e.pointerId, tipo: e.pointerType, ini: p, ult: p, x: e.clientX, y: e.clientY, moveu: false };
+    try { alvo.setPointerCapture(e.pointerId); } catch (err) {}
+    document.body.classList.add('gf-tracando');
+    var s = window.getSelection && window.getSelection(); if (s) s.removeAllRanges();
     e.preventDefault();
+    if (e.pointerType === 'pen') { var ab = encaixa(p, p); previa(ab[0], ab[1]); }
   });
   alvo.addEventListener('pointermove', function (e) {
-    if (!tracando) return;
-    var r = caret(e.clientX, e.clientY); if (!r || r.startContainer.nodeType !== 3) return;
-    var p = desloc(r.startContainer, r.startOffset); if (p < 0) return;
-    ultimo = p; e.preventDefault();
-    try {
-      window.getSelection().setBaseAndExtent(rIni.startContainer, rIni.startOffset, r.startContainer, r.startOffset);
-    } catch (err) {}
+    if (!tr || e.pointerId !== tr.id) return;
+    e.preventDefault();
+    var evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
+    var ev = evs.length ? evs[evs.length - 1] : e;
+    if (!tr.moveu && Math.abs(ev.clientX - tr.x) + Math.abs(ev.clientY - tr.y) > 5) tr.moveu = true;
+    var p = posEm(ev.clientX, ev.clientY, false);
+    if (p >= 0) tr.ult = p;
+    var ab = encaixa(tr.ini, tr.ult); previa(ab[0], ab[1]);
   }, { passive: false });
-  window.addEventListener('pointerup', function () {
-    if (!tracando) return;
-    tracando = false;
-    var a = Math.min(ini, ultimo), b = Math.max(ini, ultimo);
-    if (b - a < 1) return;
-    if (modo === 'apagar') apagaEm(a, b); else if (modo) guarda(a, b, modo);
-    var s = window.getSelection && window.getSelection(); if (s) s.removeAllRanges();
-  });
-  window.addEventListener('pointercancel', function () { tracando = false; });
+  alvo.addEventListener('pointerup', function (e) { fim(e, false); });
+  alvo.addEventListener('pointercancel', function (e) { fim(e, true); });
+  window.addEventListener('blur', function () { if (tr) fim({ pointerId: tr.id }, true); });
 
-  function daSelecao(cor) {
+  /* seleção feita com o dedo (toque longo) ou com o mouse: aplicada ao tocar na cor.
+     Guarda a última seleção porque, no iPhone/iPad, tocar no botão pode desfazê-la antes do clique. */
+  var ultSel = null;
+  document.addEventListener('selectionchange', function () {
     var s = window.getSelection && window.getSelection();
-    if (!s || s.isCollapsed || !s.rangeCount) return false;
+    if (!s || !s.rangeCount || s.isCollapsed) { if (ultSel && !ultSel.fim) ultSel.fim = Date.now(); return; }
     var r = s.getRangeAt(0);
-    if (!alvo.contains(r.commonAncestorContainer)) return false;
+    if (!alvo.contains(r.commonAncestorContainer)) return;
     var a = desloc(r.startContainer, r.startOffset), b = desloc(r.endContainer, r.endOffset);
-    if (a < 0 || b < 0) return false;
-    if (cor === 'apagar') apagaEm(Math.min(a, b), Math.max(a, b)); else guarda(Math.min(a, b), Math.max(a, b), cor);
-    s.removeAllRanges();
+    if (a < 0 || b < 0) return;
+    ultSel = { a: Math.min(a, b), b: Math.max(a, b), fim: 0 };
+  });
+  function daSelecao(cor) {
+    if (!ultSel || (ultSel.fim && Date.now() - ultSel.fim > 900)) return false;
+    var t = texto(), a = ultSel.a, b = ultSel.b;
+    while (a < b && /\s/.test(t.charAt(a))) a++;
+    while (b > a && /\s/.test(t.charAt(b - 1))) b--;
+    ultSel = null;
+    var s = window.getSelection && window.getSelection(); if (s) s.removeAllRanges();
+    if (b <= a) return false;
+    if (cor === 'apagar') apagaEm(a, b); else guarda(a, b, cor);
     return true;
   }
 
@@ -264,8 +367,8 @@
     document.body.classList.toggle('gf-ativo', modo === 'y' || modo === 'o');
     document.body.classList.toggle('gf-laranja', modo === 'o');
     document.body.classList.toggle('gf-apagar', modo === 'apagar');
-    if (modo === 'y' || modo === 'o') mostraDica('<b>Marca-texto ativo.</b> Passe a caneta ou o dedo sobre o texto para grifar. Rolar a página com o dedo continua funcionando. Toque de novo no círculo para desligar. Os grifos ficam salvos neste aparelho.');
-    if (modo === 'apagar') mostraDica('<b>Borracha ativa.</b> Passe sobre os trechos grifados para apagá-los.');
+    if (modo === 'y' || modo === 'o') mostraDica('<b>Marca-texto ativo.</b> <b>Caneta:</b> risque o texto (um toque grifa a palavra). <b>Dedo:</b> rola a página; para grifar, segure sobre o texto, ajuste a seleção e toque na cor. <b>Mouse:</b> arraste. Toque de novo no círculo para desligar.');
+    if (modo === 'apagar') mostraDica('<b>Borracha ativa.</b> Risque com a caneta (ou toque num grifo para apagá-lo inteiro). Com o dedo, selecione o trecho e toque na borracha.');
   }
   barra.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-m]'); if (!b) return;

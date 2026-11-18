@@ -108,7 +108,7 @@ const raizDe = (pg) => pg.pasta ? '../'.repeat(pg.pasta.split('/').filter(Boolea
 const ehReferencial = (pg) => /(^|\/)ref-|\/ref\//.test(pg.pasta);
 const comGrifos = (pg, html) => {
   if (!ehReferencial(pg) || html.includes('assets/grifos.js')) return html;
-  const tag = `<script src="${raizDe(pg)}assets/grifos.js?v=am1"></script>\n`;
+  const tag = `<script src="${raizDe(pg)}assets/grifos.js?v=am2"></script>\n`;
   return html.includes('</body>') ? html.replace('</body>', tag + '</body>') : html + tag;
 };
 
