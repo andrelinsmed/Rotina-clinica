@@ -12,7 +12,7 @@ ou
 
 > Referencial de "Hipertensão na APS" em Ambulatórios › Cardiologia, no padrão de escrita do André med.
 
-Se o HTML já estiver pronto (um artefato do Claude, por exemplo), basta mandar o link ou o arquivo e dizer onde ele entra. O Claude ajusta o arquivo ao padrão, gera os flashcards a partir dele quando for do NCS4 e publica.
+Se o HTML já estiver pronto (um artefato do Claude, por exemplo), basta mandar o link ou o arquivo e dizer onde ele entra. O Claude converte o arquivo para o padrão (capa vermelha, sumário, seções numeradas — igual ao TBL 3.1), sem perder texto nem esquemas, gera os flashcards a partir dele quando for do NCS4 e publica.
 
 ## Estrutura da página
 
@@ -60,6 +60,7 @@ Tudo fica no mesmo arquivo: nada de bibliotecas externas e nada de dados guardad
 | `tools/padrao/modelo.html` | esqueleto com os marcadores `{{KICKER}}`, `{{TITULO}}`, `{{SUBTITULO}}`, `{{ROTULO_OBJ}}`, `{{OBJETIVOS}}`, `{{SUMARIO}}`, `{{SECOES}}`, `{{CSS}}` |
 | `tools/padrao/referencial.css` | o CSS do padrão |
 | `tools/padrao/doc_para_padrao.py` | converte um HTML exportado do Google Docs para o padrão: `python3 doc_para_padrao.py entrada.html saida.html "KICKER" "Título" "Subtítulo"` |
+| `tools/padrao/fcref_para_padrao.py` | converte um artefato do Claude no formato `.fcref` (como o referencial do TBL 3.2) para o padrão, mantendo texto, tabelas e esquemas SVG; quadros de aula, literatura e correlação clínica viram `.note`, `.note.lit` e `.note.caso`. Mesmos argumentos do anterior |
 
 Para publicar um referencial:
 
