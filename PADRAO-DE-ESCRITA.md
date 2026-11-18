@@ -48,8 +48,13 @@ controle deslizante) não é guardado; o que o leitor produz, sim — ver marca-
 
 ### Marca-texto e tema
 
-- Barra flutuante no canto inferior direito, com duas cores (amarelo e laranja), borracha e apagar tudo.
+- Barra flutuante no canto inferior esquerdo, com duas cores (amarelo e laranja), borracha e apagar tudo.
   Funciona com caneta, dedo ou seleção comum; a rolagem vertical com o dedo continua livre.
+- Dentro do NCS4 o iframe é esticado até a altura do conteúdo, então quem rola é a página do site e
+  `position:fixed` não funciona: a barra detecta que está embutida e segue a rolagem do pai por
+  `frameElement.getBoundingClientRect()`. Pelo mesmo motivo, a barra de navegação própria da página
+  fica oculta quando embutida. Não use `requestAnimationFrame` para esse acompanhamento — ele é
+  suspenso quando o iframe sai da tela e o reposicionamento trava.
 - Os grifos ficam salvos em `localStorage`, por página, na chave `grifos:<título>`. Junto vai uma
   assinatura do texto: se a página for republicada com o texto alterado, os grifos antigos são
   descartados em vez de aparecerem fora de lugar.
