@@ -48,6 +48,10 @@ controle deslizante) não é guardado; o que o leitor produz, sim — ver marca-
 
 ### Marca-texto e tema
 
+O marca-texto **não** é escrito em cada página: ele mora em `assets/grifos.js` e o build o injeta
+automaticamente em toda página cujo caminho seja de referencial (`ncs4/ref-*/` ou
+`ambulatorios/ref/<slug>/`). Uma página nova de referencial já nasce com ele; nada a fazer.
+
 - Barra flutuante no canto inferior esquerdo, com duas cores (amarelo e laranja), borracha e apagar tudo.
   Funciona com caneta, dedo ou seleção comum; a rolagem vertical com o dedo continua livre.
 - Dentro do NCS4 o iframe é esticado até a altura do conteúdo, então quem rola é a página do site e
@@ -55,12 +59,14 @@ controle deslizante) não é guardado; o que o leitor produz, sim — ver marca-
   `frameElement.getBoundingClientRect()`. Pelo mesmo motivo, a barra de navegação própria da página
   fica oculta quando embutida. Não use `requestAnimationFrame` para esse acompanhamento — ele é
   suspenso quando o iframe sai da tela e o reposicionamento trava.
-- Os grifos ficam salvos em `localStorage`, por página, na chave `grifos:<título>`. Junto vai uma
+- Os grifos ficam salvos em `localStorage`, por página, na chave `grifos:<caminho da página>`. Junto vai uma
   assinatura do texto: se a página for republicada com o texto alterado, os grifos antigos são
   descartados em vez de aparecerem fora de lugar.
-- As posições são contadas sobre os nós de texto da página, ignorando SVG, controles e tudo que estiver
-  marcado com a classe `din` — use `din` em qualquer bloco preenchido por script (legendas que mudam
-  conforme a aba, grades de texto, leituras calculadas), senão os grifos saem do lugar.
+- As posições são contadas sobre os nós de texto da página, ignorando `svg`, `button`, `output`, `nav`,
+  os controles (`.ctrls`, `.ctl`, `.slider-row`, `.sl`), o `.readout` e tudo que estiver marcado com a
+  classe `din` — use `din` em qualquer outro bloco preenchido por script (legendas que mudam conforme
+  a aba, grades de texto), senão os grifos saem do lugar quando o leitor troca de aba.
+- O contêiner grifável é `.wrap`, ou `main` quando não houver `.wrap`.
 - A página **não** tem alternador de tema próprio: ela segue o tema do site, lido de
   `document.documentElement.dataset.theme` do documento que a embute e de `localStorage.bancos-tema`,
   e reage enquanto está aberta.

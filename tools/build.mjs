@@ -55,7 +55,7 @@ if (process.argv[2] === 'abrir') {
     const f = p(pg.pasta, pg.bin);
     if (!existsSync(f)) continue;
     try {
-      let html = decifra(readFileSync(f));
+      let html = decifra(readFileSync(f)).replace(/\n?<script src="[^"]*assets\/grifos\.js[^"]*"><\/script>/g, '');
       /* a home leva o índice embutido: volta a ser o marcador para o build preencher de novo */
       if (pg.src === 'home.html') html = html.replace(/const IDX=\{.*?\};\n/s, () => 'const IDX="__INDICE__";\n');
       writeFileSync(p('src', pg.src), html); console.log('src/' + pg.src);
@@ -102,8 +102,17 @@ function indice() {
   return { itens, nRx, blocos, amb, esp: Object.values(esp).length };
 }
 
+const raizDe = (pg) => pg.pasta ? '../'.repeat(pg.pasta.split('/').filter(Boolean).length) : './';
+/* referenciais teóricos recebem o marca-texto; ver PADRAO-DE-ESCRITA.md */
+const ehReferencial = (pg) => /(^|\/)ref-|\/ref\//.test(pg.pasta);
+const comGrifos = (pg, html) => {
+  if (!ehReferencial(pg) || html.includes('assets/grifos.js')) return html;
+  const tag = `<script src="${raizDe(pg)}assets/grifos.js?v=am1"></script>\n`;
+  return html.includes('</body>') ? html.replace('</body>', tag + '</body>') : html + tag;
+};
+
 const stub = (pg) => {
-  const raiz = pg.pasta ? '../'.repeat(pg.pasta.split('/').filter(Boolean).length) : './';
+  const raiz = raizDe(pg);
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -138,6 +147,7 @@ for (const pg of PAGINAS) {
   if (!existsSync(f)) { console.warn('faltando: src/' + pg.src); continue; }
   let html = le(f);
   if (pg.src === 'home.html') html = html.replace('"__INDICE__"', () => JSON.stringify(indice()).replace(/</g, '\\u003c'));
+  html = comGrifos(pg, html);
   if (pg.pasta) mkdirSync(p(pg.pasta), { recursive: true });
   /* só regrava o .bin se o conteúdo mudou (o IV aleatório mudaria o arquivo a cada build) */
   const fBin = p(pg.pasta, pg.bin);
