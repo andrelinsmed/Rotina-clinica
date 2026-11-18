@@ -43,7 +43,22 @@ Ficam dentro de `.fig`, em SVG ou HTML com script próprio:
 - `.readout` para o valor calculado;
 - `.hit` para áreas clicáveis no SVG.
 
-Tudo fica no mesmo arquivo: nada de bibliotecas externas e nada de dados guardados no navegador.
+Tudo fica no mesmo arquivo: nada de bibliotecas externas. O estado dos esquemas (aba ativa, posição do
+controle deslizante) não é guardado; o que o leitor produz, sim — ver marca-texto abaixo.
+
+### Marca-texto e tema
+
+- Barra flutuante no canto inferior direito, com duas cores (amarelo e laranja), borracha e apagar tudo.
+  Funciona com caneta, dedo ou seleção comum; a rolagem vertical com o dedo continua livre.
+- Os grifos ficam salvos em `localStorage`, por página, na chave `grifos:<título>`. Junto vai uma
+  assinatura do texto: se a página for republicada com o texto alterado, os grifos antigos são
+  descartados em vez de aparecerem fora de lugar.
+- As posições são contadas sobre os nós de texto da página, ignorando SVG, controles e tudo que estiver
+  marcado com a classe `din` — use `din` em qualquer bloco preenchido por script (legendas que mudam
+  conforme a aba, grades de texto, leituras calculadas), senão os grifos saem do lugar.
+- A página **não** tem alternador de tema próprio: ela segue o tema do site, lido de
+  `document.documentElement.dataset.theme` do documento que a embute e de `localStorage.bancos-tema`,
+  e reage enquanto está aberta.
 
 ### Regras de redação
 
