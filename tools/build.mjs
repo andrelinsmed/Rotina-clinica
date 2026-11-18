@@ -22,6 +22,7 @@ const PAGINAS = [
   { src: 'ncs4-ref-medlab-32.html', pasta: 'ncs4/ref-medlab-32/', bin: 'pagina.bin', titulo: 'MedLab SP 3.2 · Referencial' },
   { src: 'ncs4-ref-tutoria-31.html', pasta: 'ncs4/ref-tutoria-31/', bin: 'pagina.bin', titulo: 'Tutoria SP 3.1 · Referencial' },
   { src: 'ncs4-ref-tutoria-32.html', pasta: 'ncs4/ref-tutoria-32/', bin: 'pagina.bin', titulo: 'Tutoria SP 3.2 · Referencial' },
+  { src: 'ncs4-ref-morfo-31.html', pasta: 'ncs4/ref-morfo-31/', bin: 'pagina.bin', titulo: 'Fígado SP 3.1 · Referencial' },
   { src: 'amb-ref-prenatal.html', pasta: 'ambulatorios/ref/prenatal-exame-obstetrico/', bin: 'pagina.bin', titulo: 'Pré-natal e exame obstétrico' },
   { src: 'questoes.html',     pasta: 'questoes/',     bin: 'pagina.bin', titulo: 'Banco de questões' },
   { src: 'calendario.html',   pasta: 'calendario/',   bin: 'pagina.bin', titulo: 'Calendário' },
