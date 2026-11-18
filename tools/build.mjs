@@ -18,6 +18,7 @@ const PAGINAS = [
   { src: 'ambulatorios.html', pasta: 'ambulatorios/', bin: 'pagina.bin', titulo: 'Ambulatórios' },
   { src: 'ncs4.html',         pasta: 'ncs4/',         bin: 'pagina.bin', titulo: 'NCS4' },
   { src: 'ncs4-ref-tbl-31.html', pasta: 'ncs4/ref-tbl-31/', bin: 'pagina.bin', titulo: 'TBL SP 3.1 · Referencial' },
+  { src: 'ncs4-ref-tbl-32.html', pasta: 'ncs4/ref-tbl-32/', bin: 'pagina.bin', titulo: 'TBL SP 3.2 · Referencial' },
   { src: 'ncs4-ref-tutoria-31.html', pasta: 'ncs4/ref-tutoria-31/', bin: 'pagina.bin', titulo: 'Tutoria SP 3.1 · Referencial' },
   { src: 'amb-ref-prenatal.html', pasta: 'ambulatorios/ref/prenatal-exame-obstetrico/', bin: 'pagina.bin', titulo: 'Pré-natal e exame obstétrico' },
   { src: 'questoes.html',     pasta: 'questoes/',     bin: 'pagina.bin', titulo: 'Banco de questões' },
