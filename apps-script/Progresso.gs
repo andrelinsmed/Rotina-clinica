@@ -1,68 +1,103 @@
 /**
- * André med · sincronização do progresso de estudo entre aparelhos.
- * Guarda, nas propriedades deste script, cada item de progresso do site (grifos, respostas do
- * Banco de questões, flashcards e questões do NCS4). Não usa Drive nem pede permissão nova.
+ * André med · progresso de estudo por perfil (cada pessoa com nome + PIN).
+ * Cada perfil é um arquivo JSON na pasta "André med · progresso" do Drive desta conta, com o PIN
+ * guardado embaralhado (SHA-256 com sal) e os itens de progresso do site (grifos, respostas do
+ * Banco de questões, flashcards e questões do NCS4).
  *
- * prog_puxar  { desde }  → itens alterados no servidor depois de "desde" (milissegundos do servidor)
- * prog_enviar { itens }  → grava cada item { v, t } se for mais novo que o que está guardado
- *   v = texto guardado no aparelho (null = apagado); t = quando o aparelho mudou o item
- * Cada valor é partido em pedaços, porque uma propriedade aceita no máximo 9 KB.
+ * prog_criar  { perfil, pin }        → cria o perfil (nome livre; o identificador sai do nome)
+ * prog_entrar { perfil, pin }        → confere nome + PIN
+ * prog_puxar  { perfil, pin, desde } → itens alterados depois de "desde" (milissegundos do servidor)
+ * prog_enviar { perfil, pin, itens } → grava cada item { v, t } se for mais novo que o guardado
+ * Esqueceu o PIN? Apague o arquivo da pessoa na pasta do Drive; ela cria o perfil de novo.
  */
-const PROG_META = 'P|', PROG_PEDACO = 'P#', PROG_TAM = 3000;
+const PROG_PASTA = 'André med · progresso';
 
 function progresso_(req) {
-  if (req.acao === 'prog_puxar') {
-    const tudo = progLeTudo_(), desde = Number(req.desde) || 0, itens = {};
-    Object.keys(tudo).forEach(function (k) {
-      if (tudo[k].st > desde) itens[k] = { v: tudo[k].v, t: tudo[k].t };
-    });
-    return { ok: true, agora: Date.now(), itens: itens, uso: progUso_() };
-  }
-  if (req.acao === 'prog_enviar') {
-    const trava = LockService.getScriptLock();
-    trava.waitLock(20000);
-    try {
-      const props = PropertiesService.getScriptProperties(), tudo = progLeTudo_(), agora = Date.now(), aceitos = [];
-      Object.keys(req.itens || {}).forEach(function (k) {
-        const it = req.itens[k], velho = tudo[k];
-        if (!it || typeof it.t !== 'number') return;
-        if (velho && velho.t > it.t) return;                  /* o servidor já tem algo mais novo */
-        progGrava_(props, k, it.v === null || it.v === undefined ? null : String(it.v), it.t, agora, velho ? velho.n : 0);
-        aceitos.push(k);
+  try {
+    if (req.acao === 'prog_criar') return progCriar_(req);
+    const a = progAutentica_(req);
+    if (req.acao === 'prog_entrar') return { ok: true, perfil: a.id, nome: a.d.nome };
+    if (req.acao === 'prog_puxar') {
+      const desde = Number(req.desde) || 0, itens = {};
+      Object.keys(a.d.itens || {}).forEach(function (k) {
+        const it = a.d.itens[k];
+        if (it.st > desde) itens[k] = { v: it.v, t: it.t };
       });
-      return { ok: true, agora: agora, aceitos: aceitos, uso: progUso_() };
-    } finally { trava.releaseLock(); }
+      return { ok: true, agora: Date.now(), itens: itens };
+    }
+    if (req.acao === 'prog_enviar') {
+      const trava = LockService.getScriptLock();
+      trava.waitLock(20000);
+      try {
+        const d = progLe_(a.arq), agora = Date.now(), aceitos = [];   /* relê dentro da trava */
+        d.itens = d.itens || {};
+        Object.keys(req.itens || {}).forEach(function (k) {
+          const it = req.itens[k], velho = d.itens[k];
+          if (!it || typeof it.t !== 'number' || k.length > 200) return;
+          if (velho && velho.t > it.t) return;                        /* o servidor já tem algo mais novo */
+          d.itens[k] = { v: it.v === null || it.v === undefined ? null : String(it.v), t: it.t, st: agora };
+          aceitos.push(k);
+        });
+        if (aceitos.length) a.arq.setContent(JSON.stringify(d));
+        return { ok: true, agora: agora, aceitos: aceitos };
+      } finally { trava.releaseLock(); }
+    }
+    return { ok: false, erro: 'ação desconhecida' };
+  } catch (e) {
+    return { ok: false, erro: String(e.message || e), codigo: e.codigo || '' };
   }
-  return { ok: false, erro: 'ação desconhecida' };
 }
 
-function progLeTudo_() {
-  const todas = PropertiesService.getScriptProperties().getProperties(), out = {};
-  Object.keys(todas).forEach(function (nome) {
-    if (nome.indexOf(PROG_META) !== 0) return;
-    const k = nome.slice(PROG_META.length);
-    let m; try { m = JSON.parse(todas[nome]); } catch (e) { return; }
-    let v = '';
-    for (let i = 0; i < m.n; i++) v += todas[PROG_PEDACO + i + '|' + k] || '';
-    out[k] = { v: m.del ? null : v, t: m.t, st: m.st, n: m.n };
-  });
-  return out;
+function progErro_(msg, codigo) { const e = new Error(msg); e.codigo = codigo; return e; }
+function progId_(nome) {
+  return String(nome || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
+}
+function progPin_(pin) {
+  pin = String(pin || '');
+  if (!/^\d{4,6}$/.test(pin)) throw progErro_('O PIN precisa ter de 4 a 6 números.', 'pin-formato');
+  return pin;
+}
+function progHash_(sal, pin) {
+  return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sal + '|' + pin, Utilities.Charset.UTF_8));
+}
+function progPasta_() {
+  const props = PropertiesService.getScriptProperties(), id = props.getProperty('PROG_PASTA');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  const raiz = DriveApp.getRootFolder(), it = raiz.getFoldersByName(PROG_PASTA);
+  const p = it.hasNext() ? it.next() : raiz.createFolder(PROG_PASTA);
+  props.setProperty('PROG_PASTA', p.getId());
+  return p;
+}
+function progArq_(id) {
+  const it = progPasta_().getFilesByName(id + '.json');
+  return it.hasNext() ? it.next() : null;
+}
+function progLe_(arq) { return JSON.parse(arq.getBlob().getDataAsString('UTF-8')); }
+
+function progCriar_(req) {
+  const nome = String(req.perfil || '').trim().slice(0, 40), id = progId_(nome), pin = progPin_(req.pin);
+  if (id.length < 2) throw progErro_('Escreva um nome com pelo menos 2 letras.', 'nome');
+  const trava = LockService.getScriptLock();
+  trava.waitLock(20000);
+  try {
+    if (progArq_(id)) throw progErro_('Já existe um perfil com esse nome. Use "Entrar" ou escolha outro nome.', 'existe');
+    const sal = Utilities.getUuid();
+    progPasta_().createFile(id + '.json', JSON.stringify({ perfil: id, nome: nome, sal: sal, h: progHash_(sal, pin), criado: Date.now(), itens: {} }), 'application/json');
+    return { ok: true, perfil: id, nome: nome };
+  } finally { trava.releaseLock(); }
 }
 
-function progGrava_(props, k, v, t, st, nVelho) {
-  const pedacos = [];
-  if (v !== null) for (let i = 0; i < v.length; i += PROG_TAM) pedacos.push(v.slice(i, i + PROG_TAM));
-  const lote = {};
-  pedacos.forEach(function (p, i) { lote[PROG_PEDACO + i + '|' + k] = p; });
-  lote[PROG_META + k] = JSON.stringify({ t: t, st: st, n: pedacos.length, del: v === null ? 1 : 0 });
-  props.setProperties(lote);
-  for (let i = pedacos.length; i < (nVelho || 0); i++) props.deleteProperty(PROG_PEDACO + i + '|' + k);
-}
-
-/* quanto da cota de 500 KB das propriedades já foi usado (para o site avisar com antecedência) */
-function progUso_() {
-  const todas = PropertiesService.getScriptProperties().getProperties();
-  let b = 0;
-  Object.keys(todas).forEach(function (n) { b += n.length + String(todas[n]).length * 1.3; });
-  return Math.round(b / 1024);
+/* confere nome + PIN; 8 erros seguidos bloqueiam o perfil por 15 minutos */
+function progAutentica_(req) {
+  const id = progId_(req.perfil), pin = progPin_(req.pin);
+  if (!id) throw progErro_('Perfil inválido.', 'nome');
+  const cache = CacheService.getScriptCache(), kf = 'prog-falhas:' + id, falhas = Number(cache.get(kf)) || 0;
+  if (falhas >= 8) throw progErro_('Muitas tentativas com PIN errado. Espere 15 minutos.', 'bloqueado');
+  const arq = progArq_(id);
+  if (!arq) throw progErro_('Não existe perfil com esse nome. Confira ou crie um perfil.', 'nao-existe');
+  const d = progLe_(arq);
+  if (d.h !== progHash_(d.sal, pin)) { cache.put(kf, String(falhas + 1), 900); throw progErro_('PIN errado.', 'pin'); }
+  if (falhas) cache.remove(kf);
+  return { id: id, arq: arq, d: d };
 }
