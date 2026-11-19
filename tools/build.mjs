@@ -56,7 +56,7 @@ if (process.argv[2] === 'abrir') {
     const f = p(pg.pasta, pg.bin);
     if (!existsSync(f)) continue;
     try {
-      let html = decifra(readFileSync(f)).replace(/\n?<script src="[^"]*assets\/grifos\.js[^"]*"><\/script>/g, '');
+      let html = decifra(readFileSync(f)).replace(/\n?<script src="[^"]*assets\/(grifos|sync)\.js[^"]*"><\/script>/g, '');
       /* a home leva o índice embutido: volta a ser o marcador para o build preencher de novo */
       if (pg.src === 'home.html') html = html.replace(/const IDX=\{.*?\};\n/s, () => 'const IDX="__INDICE__";\n');
       writeFileSync(p('src', pg.src), html); console.log('src/' + pg.src);
@@ -106,10 +106,12 @@ function indice() {
 const raizDe = (pg) => pg.pasta ? '../'.repeat(pg.pasta.split('/').filter(Boolean).length) : './';
 /* referenciais teóricos recebem o marca-texto; ver PADRAO-DE-ESCRITA.md */
 const ehReferencial = (pg) => /(^|\/)ref-|\/ref\//.test(pg.pasta);
+const poeScript = (html, tag) => html.includes('</body>') ? html.replace('</body>', tag + '</body>') : html + tag;
 const comGrifos = (pg, html) => {
-  if (!ehReferencial(pg) || html.includes('assets/grifos.js')) return html;
-  const tag = `<script src="${raizDe(pg)}assets/grifos.js?v=am2"></script>\n`;
-  return html.includes('</body>') ? html.replace('</body>', tag + '</body>') : html + tag;
+  /* todas as páginas: registro de mudanças para a sincronização do progresso (assets/sync.js) */
+  if (!/<script src="[^"]*assets\/sync\.js/.test(html)) html = poeScript(html, `<script src="${raizDe(pg)}assets/sync.js?v=s1"></script>\n`);
+  if (!ehReferencial(pg) || /<script src="[^"]*assets\/grifos\.js/.test(html)) return html;
+  return poeScript(html, `<script src="${raizDe(pg)}assets/grifos.js?v=am2"></script>\n`);
 };
 
 const stub = (pg) => {

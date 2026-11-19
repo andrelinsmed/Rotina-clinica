@@ -41,6 +41,7 @@ function doPost(e) {
 
   try {
     if (String(req.acao || '').indexOf('amb_') === 0) return json_(ambulatorios_(req));   /* Ambulatorios.gs */
+    if (String(req.acao || '').indexOf('prog_') === 0) return json_(progresso_(req));    /* Progresso.gs */
     const cal = agenda_();
     if (req.acao === 'listar') return json_({ ok: true, eventos: listar_(cal, req.de, req.ate), fuso: cal.getTimeZone() });
 
